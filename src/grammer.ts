@@ -1,4 +1,4 @@
-import Grammer from "./grammer/Grammer";
+import Grammer from './grammer/Grammer.js';
 
 export default new Grammer()
   .directive([], 'scenario', /^(?<name>[A-Za-z0-9_\-\s]+)$/, () => {})

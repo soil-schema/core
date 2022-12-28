@@ -1,11 +1,12 @@
+import { expect } from 'chai';
 import { marked } from 'marked';
 import { readdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
 import Generator, { Context } from './generator/Generator.js';
-import swift from './generator/swift';
-import grammer from './grammer';
-import { parse, tokenize } from './parse';
-import Node from './structure/Node';
+import swift from './generator/swift/entry.js';
+import grammer from './grammer.js';
+import { parse, tokenize } from './parse.js';
+import Node from './structure/Node.js';
 
 class Example {
   config: any = {};
@@ -30,7 +31,6 @@ const loadExample = async (name: string) => {
   if (examples.length == 0) {
     examples = await readdir(path.join(process.cwd(), 'examples'));
   }
-  examples.forEach(filename => console.log(filename, filename.replace(/^\d{3}\-(.*)\.md$/, '$1'), name, filename.replace(/^\d{3}\-(.*)\.md$/, '$1') == name));
   const exampleName = examples.find(filename => filename.replace(/^\d{3}\-(.*)\.md$/, '$1') == name);
   if (typeof exampleName == 'undefined') {
     throw new Error(`Example document ./examples/NNN-${name}.md is not found.`);
@@ -51,9 +51,11 @@ const loadExample = async (name: string) => {
   return example;
 }
 
-test('001-basic.md', async () => {
-  const example = await loadExample('basic');
-  const ast = parse(tokenize(example.schema), grammer);
+describe('examples', () => {
+  it('001-basic.md', async () => {
+    const example = await loadExample('basic');
+    const ast = parse(tokenize(example.schema), grammer);
 
-  expect(example.makeSwift(ast)).toBe(example.generated['swift']);
+    expect(example.makeSwift(ast)).to.equal(example.generated['swift']);
+  });
 });

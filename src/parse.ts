@@ -23,11 +23,11 @@ export class TokenSeeker implements TokenProvider {
 /**
  * Parse tokens to node tree structure by specify Grammer.
  * @param tokens 
- * @param engine 
+ * @param grammer 
  * @returns 
  */
-export const parse = function(tokens: Token[], engine: Grammer): Node[] {
-  return engine.build(new TokenSeeker(tokens));
+export const parse = function(tokens: Token[], grammer: Grammer): Node[] {
+  return grammer.build(new TokenSeeker(tokens));
 }
 
 /**
