@@ -12,6 +12,7 @@ export default new Grammer()
       .directive([], 'endpoint', endpointDefinition, endpoint => {
         endpoint
           .directive([], 'response', undefined)
+          .directive([], 'action-name', /^(?<value>.+)$/)
           ;
       })
       ;

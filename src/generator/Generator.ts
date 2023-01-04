@@ -1,6 +1,7 @@
 import { mkdir, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import Node from '../structure/Node.js';
+import { SWIFT_LANG_CODE } from './swift/const.js';
 
 type EachCondition = {
   directive?: string;
@@ -83,6 +84,21 @@ export class Context {
     const context = new Context(this.langcode, this.node, this.container);
     context.config = this.config;
     return context;
+  }
+
+  hasChild(directive: string): boolean {
+    return this.node.block.findIndex(node => node.directive == directive) > -1;
+  }
+
+  getChild(directive: string): Context | undefined {
+    const node = this.node.block.find(node => node.directive == directive);
+    if (typeof node == 'undefined') {
+      return void 0;
+    } else {
+      const context = new Context(SWIFT_LANG_CODE, node, this.container);
+      context.config = this.config;
+      return context;
+    }
   }
 
   get body(): string {

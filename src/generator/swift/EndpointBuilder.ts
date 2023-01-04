@@ -10,6 +10,13 @@ export const endpointDecleration = (context: Context): string => {
 }
 
 export const endpointName = (context: Context): string => {
+
+  // When endpoint as action-name directive, use its value as endpoint name.
+  const actionName = context.getChild('action-name')?.get('value');
+  if (actionName) {
+    return capitalize(actionName);
+  }
+
   return capitalize(`${context.get('method')} ${sentence(context.get('path'))}`, { separator: '' });
 }
 

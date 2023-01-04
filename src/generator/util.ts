@@ -11,7 +11,7 @@ export const capitalize = function(subject: string | undefined, options: { separ
   if (subject == '') return '';
   return subject
     .toLocaleLowerCase()
-    .split(/[\s\-]+/)
+    .split(/[\s\-\:]+/)
     .map(sentence => sentence.trim())
     .map(sentence => sentence.substring(0, 1).toUpperCase() + sentence.substring(1))
     .join(typeof options.separator == 'string' ? options.separator : ' ');
