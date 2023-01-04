@@ -11,7 +11,7 @@ describe('Generator', () => {
     generator.template(new Template('swift', 'entity', (context: Context) => {
       return new File('sample.swift', 'body')
     }));
-    const result = generator.generate('swift');
+    const result = generator.generate({}, 'swift');
     expect(result[0].filename).to.equal('sample.swift');
     expect(result[0].body).to.equal('body');
   });

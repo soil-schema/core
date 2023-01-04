@@ -4,11 +4,13 @@ import { readdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
 import Generator, { Context } from './generator/Generator.js';
 import swift from './generator/swift/entry.js';
+import kotlin from './generator/kotlin/entry.js';
 import grammer from './grammer.js';
 import { parse, tokenize } from './parse.js';
 import Node from './structure/Node.js';
 
 class Example {
+  filename: string = '';
   config: any = {};
   schema: string = '';
   mock?: any = {};
@@ -21,7 +23,16 @@ class Example {
     generator.hookContext('swift:entity:template', (context: Context) => {
       context.addAttribute('strip-comment');
     });
-    return generator.generate('swift')[0].body;
+    return generator.generate(this.config.generate?.swift || {}, 'swift')[0].body;
+  }
+
+  makeKotlin(ast: Node[]): string {
+    const generator = new Generator(ast);
+    kotlin(generator);
+    generator.hookContext('kotlin:entity:template', (context: Context) => {
+      context.addAttribute('strip-comment');
+    });
+    return generator.generate(this.config.generate?.kotlin || {}, 'kotlin')[0].body;
   }
 }
 
@@ -37,6 +48,7 @@ const loadExample = async (name: string) => {
   }
   const exampleBody = await readFile(path.join(path.join(process.cwd(), 'examples', exampleName)), { encoding: 'utf-8' });
   let example = new Example();
+  example.filename = exampleName;
   marked(exampleBody, {
     walkTokens: (token) => {
       if (token.type != 'code') return;
@@ -51,11 +63,19 @@ const loadExample = async (name: string) => {
   return example;
 }
 
-describe('examples', () => {
-  it('001-basic.md', async () => {
-    const example = await loadExample('basic');
+const runExample = async (name: string) => {
+  const example = await loadExample(name);
+  context(example.filename, () => {
     const ast = parse(tokenize(example.schema), grammer);
-
-    expect(example.makeSwift(ast)).to.equal(example.generated['swift']);
+    it('generate swift', () => {
+      expect(example.makeSwift(ast)).to.equal(example.generated.swift);
+    })
+    it('generate kotlin', () => {
+      expect(example.makeKotlin(ast)).to.equal(example.generated.kotlin);
+    })
   });
+}
+
+describe('examples', async () => {
+  runExample('basic');
 });

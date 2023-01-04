@@ -8,6 +8,7 @@ type ConfigOptions = {
 type Config = {
   rootDir: string;
   exportDir?: string | { [key: string]: string };
+  generate?: { [key: string]: { [key: string]: any } };
 }
 
 const basePath = process.cwd();
@@ -62,6 +63,5 @@ export const makeConfiguration = async (configPath: string): Promise<Config> => 
 export default async (options: ConfigOptions): Promise<Config> => {
   const configPath = options.config || 'soil.config.js';
   const config = await makeConfiguration(path.join(process.cwd(), configPath));
-  console.log(config);
   return config;
 };

@@ -1,16 +1,5 @@
 # Basic Use Case
 
-## config
-
-```json config
-{
-  "kotlin": {
-    "package": "com.soil-schema.examples",
-    "use": "kotlin-serialization"
-  }
-}
-```
-
 ## soil schema
 
 ```soil schema
@@ -39,15 +28,13 @@ struct Account: Codable {
 ## Kotlin
 
 ```kotlin generated
-package com.soil-schema.examples
+package com.soil
 
-import kotlinx.serialization.*
-
-@Serializable
 data class Account(
-    val id: Int
-    val name: String
-)
+  val id: Int,
+  val name: String,
+) {
+}
 ```
 
 ## mock

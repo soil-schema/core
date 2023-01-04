@@ -13,6 +13,7 @@ export class Context {
   node: Node;
   container: HookContainer;
   attributes: string[] = [];
+  config: any = {};
 
   private _blocks: string[] = [];
 
@@ -54,20 +55,8 @@ export class Context {
     return this;
   }
 
-  contentEach(conditions: EachCondition, block: ((context: Context) => Context) | string): Context {
-    let _block: (context: Context) => Context = c => c
-    if (typeof block == 'string') {
-      _block = (context: Context) => context.content(block);
-    } else {
-      _block = block;
-    }
-    this.node.block
-      .filter(node => {
-        if (typeof conditions.directive == 'string' && node.directive != conditions.directive) return false;
-        return true
-      })
-      .map(node => _block(new Context(this.langcode, node, this.container)))
-      .forEach(context => this.string(context.body));
+  contentEach(conditions: EachCondition, name: string): Context {
+    this.string(this.renderEach(conditions, name));
     return this;
   }
 
@@ -82,12 +71,18 @@ export class Context {
         if (typeof conditions.directive == 'string' && node.directive != conditions.directive) return false;
         return true
       })
-      .map(node => block(new Context(this.langcode, node, this.container)))
+      .map(node => {
+        const context = new Context(this.langcode, node, this.container);
+        context.config = this.config;
+        return block(context);
+      })
       .join(conditions.separator || '\n');
   }
 
   dup(): Context {
-    return new Context(this.langcode, this.node, this.container);
+    const context = new Context(this.langcode, this.node, this.container);
+    context.config = this.config;
+    return context;
   }
 
   get body(): string {
@@ -272,15 +267,22 @@ export default class Generator {
     return this;
   }
 
-  hookContent(hook: string, run: (content: string, context: Context) => string): Generator {
+  hookContent(hook: string | string[], run: (content: string, context: Context) => string): Generator {
+    if (Array.isArray(hook)) {
+      hook = hook.join(':');
+    }
     this.hooks.hookContent(hook, run);
     return this;
   }
 
-  generate(langcode: string): File[] {
+  generate(config: { [key: string]: any }, langcode: string): File[] {
     return this.ast
       .map(node => new Context(langcode, node, this.hooks))
-      .map(context => this.templates[`${langcode}:${context.directive}`]?.render(this.hooks, context))
+      .map(context => {
+        context.config = config;
+        this.hooks.prepare(context, `${langcode}:config`);
+        return this.templates[`${langcode}:${context.directive}`]?.render(this.hooks, context)
+      })
       .filter(file => file) as File[];
   }
 }

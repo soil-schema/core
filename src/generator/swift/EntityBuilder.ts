@@ -1,4 +1,5 @@
 import Generator, { Context, File, Template } from '../Generator.js';
+import Pretty from '../Pretty.js';
 import { SWIFT_LANG_CODE } from './const.js';
 
 export const entityTemplate = (context: Context): File => {
@@ -13,7 +14,6 @@ export const entityTemplate = (context: Context): File => {
 }
 
 export const entityFileHeader = (context: Context): string => {
-  if (context.hasAttribute('strip-comment')) return '';
   return `
 ///
 /// ${context.get('name')}.swift
@@ -39,43 +39,13 @@ export const entityInit = (context: Context): string => {
     .body;
 }
 
-export const pretty = (content: string, context: Context) => {
-  const lines = content.replace(/\n\n\n/g, '\n\n').split('\n')
-  const indent = '    ';
-  var result = []
-  var indentLevel = 0
-  var commentBuffer = []
-  for (var line of lines) {
-    if (line.startsWith('///')) {
-      commentBuffer.push(`${indent.repeat(indentLevel)}${line}`)
-      continue
-    }
-    const hasBlockSignature = /^(?:@[A-Z][a-zA-Z]+ +)?(?:(public|open|internal|private|fileprivate|final)(?:\(set\))?\s+)*(var|let|struct|class|init|deinit|func|protocol|typealias|enum)\b/.test(line)
-    if (hasBlockSignature) {
-      if (result.length > 0) {
-        result.push('')
-      }
-      result.push(...commentBuffer)
-    }
-    if (line.startsWith('.')) {
-      indentLevel += 1
-    }
-    if (line == '}') {
-      indentLevel -= 1
-    }
-    if (indentLevel < 0) {
-      console.log(`Invalid indent level`, result)
-    }
-    result.push(`${indent.repeat(indentLevel)}${line}`)
-    if (line.endsWith('{')) {
-      indentLevel += 1
-    }
-    if (line.startsWith('.')) {
-      indentLevel -= 1
-    }
-    commentBuffer = []
-  }
-  return result.join('\n')
+export const pretty = (content: string, context: Context): string => {
+  return new Pretty(content).pretty({
+    indentBlock: ['{}', '()'],
+    comment: ['//', '///'],
+    stripComment: context.hasAttribute('strip-comment'),
+    indent: '    ',
+  });
 }
 
 export default (generator: Generator) => {

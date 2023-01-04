@@ -2,7 +2,7 @@ import Generator, { Context } from '../Generator.js';
 import { SWIFT_LANG_CODE } from './const.js';
 
 export const fieldProperty = (context: Context): string => {
-  return `let ${context.get('name')}: ${context.render('type')}`;
+  return `let ${context.get('name')}: ${context.render('type')}\n`;
 }
 
 export const fieldSignature = (context: Context): string => {

@@ -43,7 +43,6 @@ export default async (options: GenerateOptions) => {
   await Promise.all(files.map(async filepath => {
     ast.push(...parse(tokenize(await readFile(filepath, { encoding: 'utf-8' })), grammer));
   }));
-  console.log(ast);
 
   // Build Generator
 
@@ -54,13 +53,14 @@ export default async (options: GenerateOptions) => {
   // Generate Client Codes and Export to Files
 
   await Promise.all(options.langcode.map(async langcode => {
-    const files = generator.generate(langcode);
+    const generateConfig: any = (config.generate || {})[langcode] || {};
+    const files = generator.generate(generateConfig, langcode);
 
     let exportDir: string = '';
     if (typeof config.exportDir == 'string') {
-      exportDir = path.join('.', config.exportDir);
+      exportDir = path.resolve(config.exportDir);
     } else if (typeof config.exportDir == 'object' && typeof config.exportDir[langcode] == 'string') {
-      exportDir = path.join('.', config.exportDir[langcode]);
+      exportDir = path.resolve(config.exportDir[langcode]);
     }
 
     if (exportDir != '') {

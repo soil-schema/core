@@ -6,7 +6,7 @@ export const fieldProperty = (context: Context): string => {
 }
 
 export const fieldSignature = (context: Context): string => {
-  return `${context.get('name')}: ${context.render('type')}`;
+  return `val ${context.get('name')}: ${context.render('type')},`;
 }
 
 export const fieldType = (context: Context): string => {

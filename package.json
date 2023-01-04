@@ -4,6 +4,9 @@
   "description": "JSON API Schema Language",
   "type": "module",
   "main": "dist/soil.js",
+  "bin": {
+    "soil": "dist/soil.js"
+  },
   "scripts": {
     "build": "tsc",
     "pretest": "npm run build",
