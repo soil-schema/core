@@ -17,6 +17,14 @@ class Example {
 
   generated: { [key: string]: string } = {};
 
+  make(langcode: string, ast: Node[]): string {
+    switch (langcode) {
+      case 'swift': return this.makeSwift(ast);
+      case 'kotlin': return this.makeKotlin(ast);
+    }
+    return '';
+  }
+
   makeSwift(ast: Node[]): string {
     const generator = new Generator(ast);
     swift(generator);
@@ -36,19 +44,10 @@ class Example {
   }
 }
 
-let examples: string[] = [];
-
 const loadExample = async (name: string) => {
-  if (examples.length == 0) {
-    examples = await readdir(path.join(process.cwd(), 'examples'));
-  }
-  const exampleName = examples.find(filename => filename.replace(/^\d{3}\-(.*)\.md$/, '$1') == name);
-  if (typeof exampleName == 'undefined') {
-    throw new Error(`Example document ./examples/NNN-${name}.md is not found.`);
-  }
-  const exampleBody = await readFile(path.join(path.join(process.cwd(), 'examples', exampleName)), { encoding: 'utf-8' });
+  const exampleBody = await readFile(path.join(path.join(process.cwd(), 'examples', name)), { encoding: 'utf-8' });
   let example = new Example();
-  example.filename = exampleName;
+  example.filename = name;
   marked(exampleBody, {
     walkTokens: (token) => {
       if (token.type != 'code') return;
@@ -67,15 +66,16 @@ const runExample = async (name: string) => {
   const example = await loadExample(name);
   describe(example.filename, () => {
     const ast = parse(tokenize(example.schema), grammer);
-    it('generated swift code matches in `swift generated` code block', () => {
-      expect(example.makeSwift(ast)).to.equal(example.generated.swift);
-    })
-    it('generated kotlin code matches in `kotlin generated` code block', () => {
-      expect(example.makeKotlin(ast)).to.equal(example.generated.kotlin);
-    })
+    ['swift', 'kotlin'].forEach(langcode => {
+      if (typeof example.generated[langcode] == 'undefined') return;
+      it(`generated ${langcode} code matches in \`${langcode} generated\` code block`, () => {
+        expect(example.make(langcode, ast)).to.equal(example.generated[langcode]);
+      })
+    });
   });
 }
 
 describe('examples', async () => {
-  await runExample('basic');
+  const examples = await readdir(path.join(process.cwd(), 'examples'));
+  await Promise.all(examples.map(name => runExample(name)));
 });

@@ -36,12 +36,12 @@ const isEnableKotlinSerializable = (context: Context): boolean => {
  */
 export const serializationEntityOpen = (content: string, context: Context): string => {
   if (!isEnableKotlinSerializable(context)) return content;
-  return `@Serializable\n${content}`;
+  return `\n@Serializable\n${content.trimStart()}`;
 };
 
 export const serializationEntityImport = (content: string, context: Context): string => {
   if (!isEnableKotlinSerializable(context)) return content;
-  return 'import kotlinx.serialization.*';
+  return content + '\nimport kotlinx.serialization.*';
 };
 
 export default (generator: Generator) => {

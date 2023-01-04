@@ -1,10 +1,19 @@
 import Grammer from './grammer/Grammer.js';
 
+export const entityDefinition = /^(?<name>[A-Z][A-Za-z0-9]+)$/;
+export const fieldDefinition = /^(?<name>[a-z][a-z0-9\_]*)\s*:\s*(?<type>[A-Za-z][A-Za-z0-9\_\.]*\??|\*\??)$/;
+export const endpointDefinition = /^(?<method>[A-Z]+)\s+(?<path>(?:\/\:?[A-Za-z0-9_\-]+)+\/?)\s*$/;
+
 export default new Grammer()
   .directive([], 'scenario', /^(?<name>[A-Za-z0-9_\-\s]+)$/, () => {})
-  .directive([], 'entity', /^(?<name>[A-Z][A-Za-z0-9]+)$/, entity => {
+  .directive([], 'entity', entityDefinition, entity => {
     entity
-      .directive([], 'field', /^(?<name>[a-z][a-z0-9\_]*)\s*:\s*(?<type>[A-Za-z][A-Za-z0-9\_\.]*\??|\*\??)$/)
+      .directive([], 'field', fieldDefinition)
+      .directive([], 'endpoint', endpointDefinition, endpoint => {
+        endpoint
+          .directive([], 'response', undefined)
+          ;
+      })
       ;
   })
   ;

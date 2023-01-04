@@ -35,6 +35,7 @@ export const entityImport = (context: Context): string => {
 
 export const entityOpen = (context: Context): string => {
   return `
+
 data class ${context.get('name')}(
   ${context.render('init')}
 ) {

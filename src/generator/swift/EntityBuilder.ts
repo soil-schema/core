@@ -8,6 +8,7 @@ export const entityTemplate = (context: Context): File => {
     .content('open')
     .contentEach({ directive: 'field' }, 'property')
     .content('init')
+    .contentEach({ directive: 'endpoint' }, 'decleration')
     .content('close')
     .body;
   return new File(`${context.get('name')}.swift`, content);

@@ -18,9 +18,10 @@ export default class Directive {
     return this;
   }
 
-  directive(annotations: string[], name: string, definition?: RegExp | undefined): Directive {
+  directive(annotations: string[], name: string, definition?: RegExp | undefined, builder: (directive: Directive) => void = () => {}): Directive {
     const directive = new Directive(name, definition);
     annotations.forEach(name => directive.annotation(name))
+    builder(directive);
     this.directives.push(directive);
     return this;
   }
