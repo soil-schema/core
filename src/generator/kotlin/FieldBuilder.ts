@@ -1,5 +1,5 @@
 import Generator, { Context } from '../Generator.js';
-import { SWIFT_LANG_CODE } from './const.js';
+import { KOTLIN_LANG_CODE } from './const.js';
 
 export const fieldProperty = (context: Context): string => {
   return `let ${context.get('name')}: ${context.render('type')}`;
@@ -24,9 +24,9 @@ export const fieldAssignProperty = (context: Context): string => {
 
 export default (generator: Generator) => {
   generator
-    .renderer(SWIFT_LANG_CODE, 'field', 'property', fieldProperty)
-    .renderer(SWIFT_LANG_CODE, 'field', 'signature', fieldSignature)
-    .renderer(SWIFT_LANG_CODE, 'field', 'type', fieldType)
-    .renderer(SWIFT_LANG_CODE, 'field', 'assign-property', fieldAssignProperty)
+    .renderer(KOTLIN_LANG_CODE, 'field', 'property', fieldProperty)
+    .renderer(KOTLIN_LANG_CODE, 'field', 'signature', fieldSignature)
+    .renderer(KOTLIN_LANG_CODE, 'field', 'type', fieldType)
+    .renderer(KOTLIN_LANG_CODE, 'field', 'assign-property', fieldAssignProperty)
     ;
 }

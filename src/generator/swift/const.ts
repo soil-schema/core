@@ -1,0 +1,1 @@
+export const SWIFT_LANG_CODE = 'swift';

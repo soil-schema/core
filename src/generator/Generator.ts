@@ -1,3 +1,5 @@
+import { mkdir, stat, writeFile } from 'node:fs/promises';
+import path from 'node:path';
 import Node from '../structure/Node.js';
 
 type EachCondition = {
@@ -126,14 +128,20 @@ class ContentHook {
 }
 
 export class Renderer {
+  langcode: string;
   directive: string;
   name: string;
   run: (context: Context) => string;
 
-  constructor(directive: string, name: string, run: (context: Context) => string) {
+  constructor(langcode: string, directive: string, name: string, run: (context: Context) => string) {
+    this.langcode = langcode;
     this.directive = directive;
     this.name = name;
     this.run = run;
+  }
+
+  test(context: Context): boolean {
+    return context.langcode == this.langcode && context.directive == this.directive;
   }
 }
 
@@ -151,8 +159,8 @@ export class HookContainer {
     this.contentHooks.push(new ContentHook(hook, run))
   }
 
-  renderer(directive: string, name: string, run: (context: Context) => string) {
-    this.renderers.push(new Renderer(directive, name, run));
+  renderer(langcode: string, directive: string, name: string, run: (context: Context) => string) {
+    this.renderers.push(new Renderer(langcode, directive, name, run));
   }
 
   prepare(context: Context, ...hooks: string[]) {
@@ -167,7 +175,7 @@ export class HookContainer {
       `${context.langcode}:${context.directive}:${name}`,
       `${context.langcode}:${name}`,
     ].filter(e => e) as string[];
-    const renderer = this.renderers.find(renderer => renderer.directive == context.directive && renderer.name == name)
+    const renderer = this.renderers.find(renderer => renderer.test(context) && renderer.name == name)
     if (typeof renderer == 'undefined') return '';
     this.prepare(context, ...hooks);
     return this.post(renderer.run(context), context, ...hooks);
@@ -182,6 +190,11 @@ export class HookContainer {
   }
 }
 
+type FileWriteOptions = {
+  exportDir: string;
+  encoding: BufferEncoding;
+};
+
 // Generated file.
 export class File {
   filename: string;
@@ -190,6 +203,22 @@ export class File {
   constructor(filename: string, body: string) {
     this.filename = filename;
     this.body = body;
+  }
+
+  async write(options: FileWriteOptions) {
+    const fullpath = path.join(options.exportDir, this.filename);
+    const dirpath = path.dirname(fullpath);
+    try {
+      await stat(dirpath);
+    } catch (error: any) {
+      if (error.code == 'ENOENT' && error.syscall == 'stat') {
+        await mkdir(dirpath, { recursive: true });
+      } else {
+        console.log(error);
+      }
+    }
+    await writeFile(fullpath, this.body, { encoding: options.encoding, flag: 'w' })
+    console.log('Write File:', fullpath);
   }
 }
 
@@ -233,8 +262,8 @@ export default class Generator {
     return this;
   }
 
-  renderer(directive: string, name: string, run: (context: Context) => string) {
-    this.hooks.renderer(directive, name, run);
+  renderer(langcode: string, directive: string, name: string, run: (context: Context) => string) {
+    this.hooks.renderer(langcode, directive, name, run);
     return this;
   }
 
