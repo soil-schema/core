@@ -65,17 +65,17 @@ const loadExample = async (name: string) => {
 
 const runExample = async (name: string) => {
   const example = await loadExample(name);
-  context(example.filename, () => {
+  describe(example.filename, () => {
     const ast = parse(tokenize(example.schema), grammer);
-    it('generate swift', () => {
+    it('generated swift code matches in `swift generated` code block', () => {
       expect(example.makeSwift(ast)).to.equal(example.generated.swift);
     })
-    it('generate kotlin', () => {
+    it('generated kotlin code matches in `kotlin generated` code block', () => {
       expect(example.makeKotlin(ast)).to.equal(example.generated.kotlin);
     })
   });
 }
 
 describe('examples', async () => {
-  runExample('basic');
+  await runExample('basic');
 });

@@ -1,6 +1,10 @@
 # Basic Use Case
 
+The basic use case for soil-schema is to generate code for a data model.
+
 ## soil schema
+
+This schema defines `Account` model with integer id and string name.
 
 ```soil schema
 entity Account {
@@ -10,6 +14,8 @@ entity Account {
 ```
 
 ## Swift
+
+The Swift generated code includes a initializer.
 
 ```swift generated
 struct Account: Codable {
@@ -26,6 +32,9 @@ struct Account: Codable {
 ```
 
 ## Kotlin
+
+In this example, the Kotlin generated code contains an empty body.
+In most cases, the class body contains additional data model definitions.
 
 ```kotlin generated
 package com.soil
