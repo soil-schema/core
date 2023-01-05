@@ -9,13 +9,19 @@ export const fieldSignature = (context: Context): string => {
   return `${context.get('name')}: ${context.render('type')}`;
 }
 
-export const fieldType = (context: Context): string => {
-  switch (context.get('type')) {
+export const fieldType = (field: Context): string => {
+  switch (field.get('type')) {
   case 'Integer':
     return 'Int';
   default:
-    return context.get('type') || 'Unknown';
+    return field.get('type') || 'Unknown';
   }
+}
+
+export const fieldListType = (content: string, field: Context): string => {
+  if (!field.hasAttribute('list')) return content;
+  const type = content.replace(/^List\<(.+)\>\??$/, '$1');
+  return `[${type}]`;
 }
 
 export const fieldAssignProperty = (context: Context): string => {
@@ -28,5 +34,7 @@ export default (generator: Generator) => {
     .renderer(SWIFT_LANG_CODE, 'field', 'signature', fieldSignature)
     .renderer(SWIFT_LANG_CODE, 'field', 'type', fieldType)
     .renderer(SWIFT_LANG_CODE, 'field', 'assign-property', fieldAssignProperty)
+
+    .hookContent([SWIFT_LANG_CODE, 'field', 'type'], fieldListType)
     ;
 }

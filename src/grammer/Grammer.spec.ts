@@ -56,4 +56,24 @@ describe('Grammer', () => {
     expect(result[0].block[0].definition.name).to.equal('id');
     expect(result[0].block[0].definition.type).to.equal('Int');
   });
+
+  it('#build with no-definition directive', () => {
+    const grammer = new Grammer()
+    .directive([], 'schema', undefined, entity => {
+      entity
+        .directive([], 'field', /^(?<name>[a-z]+):\s(?<type>[A-Za-z][A-Za-z0-9\-\.]*)$/);
+    });
+  
+    const provider = new MockTokenProvider([
+      'schema', ' ', '{', 'field', 'id:', ' ', 'Int', '}',
+    ]);
+  
+    const result = grammer.build(provider);
+    expect(result.length).to.equal(1);
+    expect(result[0].directive).to.equal('schema');
+    expect(result[0].definition.body).to.equal('');
+    expect(result[0].block[0].directive).to.equal('field');
+    expect(result[0].block[0].definition.name).to.equal('id');
+    expect(result[0].block[0].definition.type).to.equal('Int');
+  });
 });

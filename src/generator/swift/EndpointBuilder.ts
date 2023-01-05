@@ -5,6 +5,7 @@ import { capitalize, sentence } from '../util.js';
 export const endpointDecleration = (context: Context): string => {
   return context
     .content('open')
+    .content('response')
     .content('close')
     .body;
 }
@@ -32,7 +33,28 @@ struct ${context.render('name')}Endpoint {
 `;
 }
 
+export const endpointResponse = (context: Context): string => {
+  const response = context.getChild('response');
+  if (response) {
+    return response
+      .content('open')
+      .contentEach({ directive: 'field' }, 'property')
+      .content('close')
+      .body
+  } else {
+    return 'typealias Response = Void';
+  }
+}
+
 export const endpointClose = (context: Context): string => {
+  return '}';
+}
+
+export const responseOpen = (context: Context): string => {
+  return 'struct Response: Decodable {\n';
+}
+
+export const responseClose = (context: Context): string => {
   return '}';
 }
 
@@ -41,6 +63,9 @@ export default (generator: Generator) => {
     .renderer(SWIFT_LANG_CODE, 'endpoint', 'decleration', endpointDecleration)
     .renderer(SWIFT_LANG_CODE, 'endpoint', 'name', endpointName)
     .renderer(SWIFT_LANG_CODE, 'endpoint', 'open', endpointOpen)
+    .renderer(SWIFT_LANG_CODE, 'endpoint', 'response', endpointResponse)
     .renderer(SWIFT_LANG_CODE, 'endpoint', 'close', endpointClose)
+    .renderer(SWIFT_LANG_CODE, 'response', 'open', responseOpen)
+    .renderer(SWIFT_LANG_CODE, 'response', 'close', responseClose)
     ;
 }

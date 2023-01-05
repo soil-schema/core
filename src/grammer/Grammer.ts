@@ -9,7 +9,7 @@ export default class Grammer {
 
   directives: Directive[] = [];
 
-  directive(annotations: string[], name: string, definition: RegExp | undefined, builder: (directive: Directive) => void): Grammer {
+  directive(annotations: string[], name: string, definition: RegExp | undefined, builder: (directive: Directive) => void = () => {}): Grammer {
     const directive = new Directive(name, definition);
     annotations.forEach(name => directive.annotation(name))
     builder(directive);

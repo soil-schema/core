@@ -75,6 +75,7 @@ export class Context {
       .map(node => {
         const context = new Context(this.langcode, node, this.container);
         context.config = this.config;
+        this.container.render('*', context);
         return block(context);
       })
       .join(conditions.separator || '\n');
@@ -83,6 +84,7 @@ export class Context {
   dup(): Context {
     const context = new Context(this.langcode, this.node, this.container);
     context.config = this.config;
+    this.container.render('*', context);
     return context;
   }
 
@@ -97,6 +99,7 @@ export class Context {
     } else {
       const context = new Context(this.langcode, node, this.container);
       context.config = this.config;
+      this.container.render('*', context);
       return context;
     }
   }
@@ -184,15 +187,12 @@ export class HookContainer {
     const hooks = [
       (context.annotation && `${context.directive}:${name}`),
       `${context.directive}:${name}`,
-      `${name}`,
       (context.annotation && `${context.langcode}:${context.directive}:${name}`),
       `${context.langcode}:${context.directive}:${name}`,
-      `${context.langcode}:${name}`,
     ].filter(e => e) as string[];
     const renderer = this.renderers.find(renderer => renderer.test(context) && renderer.name == name)
-    if (typeof renderer == 'undefined') return '';
     this.prepare(context, ...hooks);
-    return this.post(renderer.run(context), context, ...hooks);
+    return this.post(renderer?.run(context) || '', context, ...hooks);
   }
 
   post(content: string, context: Context, ...hooks: string[]): string {
