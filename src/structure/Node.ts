@@ -10,7 +10,13 @@ export default class Node {
     this.definition = definition;
   }
 
-  addChild(node: Node) {
+  /**
+   * Add child node. This method supports method chaining.
+   * @param {Node} node child Node to add.
+   * @returns {Node} this Node.
+   */
+  addChild(node: Node): Node {
     this.block.push(node);
+    return this;
   }
 }

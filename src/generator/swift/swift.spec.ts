@@ -8,7 +8,7 @@ const generator = new Generator([]);
 
 swift(generator);
 
-describe('generator:swift', () => {
+describe('Swift / Endpoint', () => {
 
   const container = generator.hooks;
   const makeEndpoint = (definition: string): Node => {
@@ -24,44 +24,27 @@ describe('generator:swift', () => {
     expect.fail(`Invalid endpoint definition: ${definition}`);
   }
 
-  {
-    const endpoint = makeEndpoint('GET /users');
-    it(`endpoint name with ${endpoint.definition.method} ${endpoint.definition.path}`, () => {
-      const context = new Context(SWIFT_LANG_CODE, endpoint, container);
+  [
+    { endpoint: 'GET /users', expectName: 'GetUsers' },
+    { endpoint: 'POST /users', expectName: 'PostUsers' },
+    { endpoint: 'GET /users/:id', expectName: 'GetUsersId' },
+    { endpoint: 'INVALID /unknown', expectName: 'InvalidUnknown' },
+  ]
+  .forEach(({ endpoint, expectName }) => {
+    const context = new Context(SWIFT_LANG_CODE, makeEndpoint(endpoint), container);
+    it(`endpoint name with ${endpoint}`, () => {
       const actual = container.render('name', context);
-
-      expect(actual).to.equal('GetUsers');
+      expect(actual).to.equal(expectName);
     });
-  }
+  });
 
-  {
-    const endpoint = makeEndpoint('POST /users');
-    it(`endpoint name with ${endpoint.definition.method} ${endpoint.definition.path}`, () => {
-      const context = new Context(SWIFT_LANG_CODE, endpoint, container);
-      const actual = container.render('name', context);
-
-      expect(actual).to.equal('PostUsers');
-    });
-  }
-
-  {
-    const endpoint = makeEndpoint('GET /users/:id');
-    it(`endpoint name with ${endpoint.definition.method} ${endpoint.definition.path}`, () => {
-      const context = new Context(SWIFT_LANG_CODE, endpoint, container);
-      const actual = container.render('name', context);
-
-      expect(actual).to.equal('GetUsersId');
-    });
-  }
-
-  {
+  it(`endpoint name with action-name = fetch`, () => {
     const endpoint = makeEndpoint('GET /users/:id');
     endpoint.addChild(new Node('action-name', { value: 'fetch' }))
-    it(`endpoint name with action-name = fetch`, () => {
-      const context = new Context(SWIFT_LANG_CODE, endpoint, container);
-      const actual = container.render('name', context);
 
-      expect(actual).to.equal('Fetch');
-    });
-  }
+    const context = new Context(SWIFT_LANG_CODE, endpoint, container);
+    const actual = container.render('name', context);
+
+    expect(actual).to.equal('Fetch');
+  });
 });

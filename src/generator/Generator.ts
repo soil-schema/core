@@ -1,7 +1,7 @@
 import { mkdir, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import Node from '../structure/Node.js';
-import { SWIFT_LANG_CODE } from './swift/const.js';
+import fieldProcedure from './FieldProcedure.js';
 
 type EachCondition = {
   directive?: string;
@@ -95,7 +95,7 @@ export class Context {
     if (typeof node == 'undefined') {
       return void 0;
     } else {
-      const context = new Context(SWIFT_LANG_CODE, node, this.container);
+      const context = new Context(this.langcode, node, this.container);
       context.config = this.config;
       return context;
     }
@@ -182,6 +182,9 @@ export class HookContainer {
 
   render(name: string, context: Context): string {
     const hooks = [
+      (context.annotation && `${context.directive}:${name}`),
+      `${context.directive}:${name}`,
+      `${name}`,
       (context.annotation && `${context.langcode}:${context.directive}:${name}`),
       `${context.langcode}:${context.directive}:${name}`,
       `${context.langcode}:${name}`,
@@ -266,6 +269,7 @@ export default class Generator {
 
   constructor(ast: Node[]) {
     this.ast = ast;
+    fieldProcedure(this);
   }
 
   template(template: Template): Generator {
