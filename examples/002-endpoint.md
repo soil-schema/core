@@ -48,3 +48,25 @@ struct User: Codable {
     }
 }
 ```
+
+## Kotlin
+
+```kotlin generated
+package com.soil
+
+data class User(
+  val id: Int,
+  val name: String,
+) {
+
+  data class GetUsersEndpoint {
+
+    val method: String = "GET"
+    val path: String = "/users"
+
+    data class Response(
+      val users: List<User>,
+    )
+  }
+}
+```

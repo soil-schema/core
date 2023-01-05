@@ -1,10 +1,13 @@
 import Generator, { Context } from '../Generator.js';
 import Config from './Config.js';
-import { KOTLIN_LANG_CODE, ENTITY_DIRECTIVE } from './const.js';
+import { KOTLIN_LANG_CODE, ENTITY_DIRECTIVE, ENDPOINT_DIRECTIVE, RESPONSE_DIRECTIVE } from './const.js';
 import {
   OPEN as ENTITY_OPEN,
   IMPORT as ENTITY_IMPORT,
 } from './EntityBuilder.js';
+import {
+  OPEN as ENDPOINT_OPEN,
+} from './EndpointBuilder.js';
 
 const isEnableKotlinSerializable = (context: Context): boolean => {
   const config = context.config as Config;
@@ -15,7 +18,7 @@ const isEnableKotlinSerializable = (context: Context): boolean => {
 }
 
 /**
- * Add `@Serializable` annotation to Entity data class.
+ * Add `@Serializable` annotation to kotlin data class.
  * 
  * before:
  * ```
@@ -34,19 +37,20 @@ const isEnableKotlinSerializable = (context: Context): boolean => {
  * 
  * @see https://github.com/Kotlin/kotlinx.serialization/blob/master/docs/basic-serialization.md#serializable-classes
  */
-export const serializationEntityOpen = (content: string, context: Context): string => {
+export const serializableDataClass = (content: string, context: Context): string => {
   if (!isEnableKotlinSerializable(context)) return content;
-  return `\n@Serializable\n${content.trimStart()}`;
+  return content.replace(/\b(data\s+class)\b/, '@Serializable\n$1');
 };
 
 export const serializationEntityImport = (content: string, context: Context): string => {
   if (!isEnableKotlinSerializable(context)) return content;
-  return content + '\nimport kotlinx.serialization.*';
+  return content + 'import kotlinx.serialization.*\n';
 };
 
 export default (generator: Generator) => {
   generator
-    .hookContent([KOTLIN_LANG_CODE, ENTITY_DIRECTIVE, ENTITY_OPEN], serializationEntityOpen)
+    .hookContent([KOTLIN_LANG_CODE, ENTITY_DIRECTIVE, ENTITY_OPEN], serializableDataClass)
+    .hookContent([KOTLIN_LANG_CODE, RESPONSE_DIRECTIVE, ENDPOINT_OPEN], serializableDataClass)
     .hookContent([KOTLIN_LANG_CODE, ENTITY_DIRECTIVE, ENTITY_IMPORT], serializationEntityImport)
     ;
 }

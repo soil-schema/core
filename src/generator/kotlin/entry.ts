@@ -1,12 +1,14 @@
 import Generator from '../Generator.js';
 import Config from './Config.js';
 import entity from './EntityBuilder.js';
-import filed from './FieldBuilder.js';
+import field from './FieldBuilder.js';
+import endpoint from './EndpointBuilder.js';
 import kotlinSerialization from './KotlinSerialization.js';
 
 export default (generator: Generator) => {
   entity(generator);
-  filed(generator);
+  field(generator);
+  endpoint(generator);
 
   // Apply kotlin-serialization custom hooks
   kotlinSerialization(generator);

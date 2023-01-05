@@ -52,10 +52,10 @@ const loadExample = async (name: string) => {
     walkTokens: (token) => {
       if (token.type != 'code') return;
       if (token.lang == 'soil schema') example.schema = token.text;
-      if (token.lang == 'swift generated') example.generated['swift'] = token.text;
-      if (token.lang == 'kotlin generated') example.generated['kotlin'] = token.text;
       if (token.lang == 'json config') example.config = JSON.parse(token.text);
       if (token.lang == 'json mock') example.mock = JSON.parse(token.text);
+      // [!] `xxx generated` -> example.generated['xxx'] = token.text;
+      if (/^[a-z]+\s+generated$/.test(token.lang || '')) example.generated[(token.lang || '').replace(/\s+generated$/, '')] = token.text;
     },
   });
 
@@ -69,7 +69,7 @@ const runExample = async (name: string) => {
     ['swift', 'kotlin'].forEach(langcode => {
       if (typeof example.generated[langcode] == 'undefined') return;
       it(`generated ${langcode} code matches in \`${langcode} generated\` code block`, () => {
-        expect(example.make(langcode, ast)).to.equal(example.generated[langcode]);
+        expect(example.make(langcode, ast).replace(/ /g, '_')).to.equal(example.generated[langcode].replace(/ /g, '_'));
       })
     });
   });

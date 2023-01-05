@@ -22,6 +22,12 @@ soil-schema supports `kotlin-serialization` via `generate.kotlin.use` config.
 entity Book {
   field id: String
   field title: String
+
+  endpoint GET /books {
+    response {
+      field books: List<Book>
+    }
+  }
 }
 ```
 
@@ -37,5 +43,16 @@ data class Book(
   val id: String,
   val title: String,
 ) {
+
+  data class GetBooksEndpoint {
+
+    val method: String = "GET"
+    val path: String = "/users"
+
+    @Serializable
+    data class Response(
+      val books: List<Book>,
+    )
+  }
 }
 ```

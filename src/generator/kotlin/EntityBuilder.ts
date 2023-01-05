@@ -10,6 +10,7 @@ export const entityTemplate = (context: Context): File => {
   const content = context
     .content('file-header')
     .content(OPEN)
+    .contentEach({ directive: 'endpoint' }, 'decleration')
     .content('close')
     .body;
   return new File(`${context.get('name')}.kt`, content);
