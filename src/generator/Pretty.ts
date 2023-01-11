@@ -56,7 +56,7 @@ export default class Pretty {
     return this.content
       .map(line => line.export({ indent }))
       .join('\n')
-      .replace(/\r?\n\r?\n\r?\n/g, '\n\n')
+      .replace(/\r?\n\r?\n(\r?\n)+/g, '\n\n')
       .trim();
   }
 }

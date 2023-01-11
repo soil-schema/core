@@ -45,7 +45,9 @@ struct User: Codable {
             let users: [User]
 
         }
+
     }
+
 }
 ```
 
@@ -67,6 +69,8 @@ data class User(
     data class Response(
       val users: List<User>,
     )
+
   }
+
 }
 ```

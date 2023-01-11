@@ -28,6 +28,7 @@ struct Account: Codable {
         self.id = id
         self.name = name
     }
+
 }
 ```
 
@@ -43,6 +44,7 @@ data class Account(
   val id: Int,
   val name: String,
 ) {
+
 }
 ```
 

@@ -2,13 +2,12 @@ import chalk from 'chalk';
 import { readdir, readFile, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import grammer from '../grammer.js';
-import Generator from '../generator/Generator.js';
 import { parse, tokenize } from '../parse.js';
 import loadConfig from './config.js';
 import Node from '../structure/Node.js';
 
-import swift from '../generator/swift/entry.js';
-import kotlin from '../generator/kotlin/entry.js';
+// import swift from '../generator/swift/entry.js';
+// import kotlin from '../generator/kotlin/entry.js';
 
 type GenerateOptions = {
   langcode: string[];
@@ -46,27 +45,23 @@ export default async (options: GenerateOptions) => {
 
   // Build Generator
 
-  const generator = new Generator(ast);
-  swift(generator);
-  kotlin(generator);
-
   // Generate Client Codes and Export to Files
 
   await Promise.all(options.langcode.map(async langcode => {
-    const generateConfig: any = (config.generate || {})[langcode] || {};
-    const files = generator.generate(generateConfig, langcode);
+    // const generateConfig: any = (config.generate || {})[langcode] || {};
+    // const files = generator.generate(generateConfig, langcode);
 
-    let exportDir: string = '';
-    if (typeof config.exportDir == 'string') {
-      exportDir = path.resolve(config.exportDir);
-    } else if (typeof config.exportDir == 'object' && typeof config.exportDir[langcode] == 'string') {
-      exportDir = path.resolve(config.exportDir[langcode]);
-    }
+    // let exportDir: string = '';
+    // if (typeof config.exportDir == 'string') {
+    //   exportDir = path.resolve(config.exportDir);
+    // } else if (typeof config.exportDir == 'object' && typeof config.exportDir[langcode] == 'string') {
+    //   exportDir = path.resolve(config.exportDir[langcode]);
+    // }
 
-    if (exportDir != '') {
-      await Promise.all(files.map(async file => file.write({ exportDir, encoding: 'utf-8' })));
-    } else {
-      console.error('Unspecified export dir');
-    }
+    // if (exportDir != '') {
+    //   await Promise.all(files.map(async file => file.write({ exportDir, encoding: 'utf-8' })));
+    // } else {
+    //   console.error('Unspecified export dir');
+    // }
   }));
 };

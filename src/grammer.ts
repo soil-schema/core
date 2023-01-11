@@ -8,7 +8,7 @@ export default new Grammer()
   .directive([], 'scenario', /^(?<name>[A-Za-z0-9_\-\s]+)$/, () => {})
   .directive([], 'entity', entityDefinition, entity => {
     entity
-      .directive([], 'field', fieldDefinition)
+      .directive(['mutable', 'write-only'], 'field', fieldDefinition)
       .directive([], 'endpoint', endpointDefinition, endpoint => {
         endpoint
           .directive([], 'response', undefined, response => {

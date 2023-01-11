@@ -47,12 +47,14 @@ data class Book(
   data class GetBooksEndpoint {
 
     val method: String = "GET"
-    val path: String = "/users"
+    val path: String = "/books"
 
     @Serializable
     data class Response(
       val books: List<Book>,
     )
+
   }
+
 }
 ```

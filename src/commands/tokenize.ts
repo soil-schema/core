@@ -24,6 +24,5 @@ export default (files: string[], options: TokenizeOptions) => {
           logs.push(error);
         }
       }
-      console.log(logs.join('\r\n'));
     });
 }
