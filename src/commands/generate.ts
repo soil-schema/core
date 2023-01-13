@@ -1,13 +1,13 @@
-import chalk from 'chalk';
-import { readdir, readFile, stat, writeFile } from 'node:fs/promises';
+import { readdir, readFile, stat } from 'node:fs/promises';
 import path from 'node:path';
 import grammer from '../grammer.js';
 import { parse, tokenize } from '../parse.js';
 import loadConfig from './config.js';
 import Node from '../structure/Node.js';
+import { Context, File, run } from '../generator/Blueprint.js';
 
-// import swift from '../generator/swift/entry.js';
-// import kotlin from '../generator/kotlin/entry.js';
+import '../generator/swift/index.js';
+import '../generator/kotlin/index.js';
 
 type GenerateOptions = {
   langcode: string[];
@@ -16,13 +16,14 @@ type GenerateOptions = {
 
 export const loadSource = async (dirpath: string): Promise<string[]> => {
   const files = (await readdir(dirpath))
+    .filter(name => name != 'node_modules')
     .map(name => path.join(dirpath, name));
   let result: string[] = [];
   for (const filepath of files) {
     const filestat = await stat(filepath)
     if (filestat.isDirectory()) {
       result.push(...await loadSource(filepath));
-    } else if (filestat.isFile()) {
+    } else if (filestat.isFile() && filepath.endsWith('.soil')) {
       result.push(filepath);
     }
   }
@@ -43,25 +44,34 @@ export default async (options: GenerateOptions) => {
     ast.push(...parse(tokenize(await readFile(filepath, { encoding: 'utf-8' })), grammer));
   }));
 
-  // Build Generator
-
   // Generate Client Codes and Export to Files
 
+  const root = new Node('root', {});
+  ast.forEach(node => root.addChild(node));
+
   await Promise.all(options.langcode.map(async langcode => {
-    // const generateConfig: any = (config.generate || {})[langcode] || {};
-    // const files = generator.generate(generateConfig, langcode);
+    const generateConfig: any = (config.generate || {})[langcode] || {};
 
-    // let exportDir: string = '';
-    // if (typeof config.exportDir == 'string') {
-    //   exportDir = path.resolve(config.exportDir);
-    // } else if (typeof config.exportDir == 'object' && typeof config.exportDir[langcode] == 'string') {
-    //   exportDir = path.resolve(config.exportDir[langcode]);
-    // }
+    let exportDir: string = '';
+    if (typeof config.exportDir == 'string') {
+      exportDir = path.resolve(config.exportDir);
+    } else if (typeof config.exportDir == 'object' && typeof config.exportDir[langcode] == 'string') {
+      exportDir = path.resolve(config.exportDir[langcode]);
+    }
 
-    // if (exportDir != '') {
-    //   await Promise.all(files.map(async file => file.write({ exportDir, encoding: 'utf-8' })));
-    // } else {
-    //   console.error('Unspecified export dir');
-    // }
+    if (exportDir != '') {
+      const promises = root.block
+        .map(target => new Context(langcode, target))
+        .map(context => {
+          context.config = Object.assign({}, generateConfig);
+          run(context);
+          return context.currentFile;
+        })
+        .filter((file): file is File => !!file)
+        .map(async file => file.write({ exportDir, encoding: 'utf-8' }))
+      await Promise.all(promises);
+    } else {
+      console.error('Unspecified export dir');
+    }
   }));
 };

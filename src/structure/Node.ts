@@ -40,6 +40,10 @@ export default class Node {
   test(matcher: Matcher): boolean {
     return matcher.test(this);
   }
+
+  get isRoot(): boolean {
+    return !!this.parent;
+  }
 }
 
 export class Matcher {

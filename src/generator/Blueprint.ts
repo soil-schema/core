@@ -1,5 +1,6 @@
-import chalk from "chalk";
-import { Stream, Writable } from "stream";
+import { mkdir, stat, writeFile } from "fs/promises";
+import path from "path";
+import { Writable } from "stream";
 import Node, { Matcher, Matcher as NodeMatcher } from '../structure/Node.js';
 
 // == Classes.
@@ -69,6 +70,22 @@ export class File {
 
   constructor(filename: string) {
     this.filename = filename;
+  }
+
+  async write(options: { exportDir: string, encoding: BufferEncoding }) {
+    const fullpath = path.join(options.exportDir, this.filename);
+    const dirpath = path.dirname(fullpath);
+    try {
+      await stat(dirpath);
+    } catch (error: any) {
+      if (error.code == 'ENOENT' && error.syscall == 'stat') {
+        await mkdir(dirpath, { recursive: true });
+      } else {
+        console.log(error);
+      }
+    }
+    await writeFile(fullpath, this.body, { encoding: options.encoding, flag: 'w' })
+    console.log('Write File:', fullpath);
   }
 }
 
