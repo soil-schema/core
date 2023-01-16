@@ -32,13 +32,19 @@ export default class Pretty {
           const index = body.indexOf(condition);
           if (index > -1) {
             if (options.stripComment == true) {
-              // [!] When enable stripping comments, modify source code.
+              // [!] When enable stripping comments, drop trailing one line comments.
               line.body = body.slice(0, index).trimEnd();
             }
             body = body.slice(0, index);
           }
         }
       });
+
+      // - In method chaining, increment indent level.
+
+      if (body.startsWith('.')) { // TODO: Any Languages
+        line.indent += 1;
+      }
 
       // - Check block opener / closer and update indentLevel variable.
 

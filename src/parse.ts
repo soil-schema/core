@@ -27,6 +27,16 @@ export class TokenSeeker implements TokenProvider {
  * @returns 
  */
 export const parse = function(tokens: Token[], grammer: Grammer): Node[] {
+  const statements: Token[][] = tokens.reduce((statements: Token[][], token: Token): Token[][] => {
+    if (token instanceof PunctuationToken) {
+      statements.unshift([]);
+    }
+    if (token.isLineBreak) {
+      statements.unshift([]);
+    }
+    statements[0].push(token);
+    return statements;
+  }, [[]]).reverse();
   return grammer.build(new TokenSeeker(tokens));
 }
 

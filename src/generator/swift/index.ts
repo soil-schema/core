@@ -135,8 +135,8 @@ const builder = () => {
   });
 
   blueprint('swift:response:endpoint', endpoint => {
-    if (exists('response')) {
-      dig('response', () => block('declaration'));
+    if (exists('success')) {
+      dig('success', () => block('declaration'));
     } else {
       write('typealias Response = Void');
     }
@@ -144,13 +144,13 @@ const builder = () => {
 
   // == schema response
 
-  blueprint('swift:declaration:response', schema => {
+  blueprint('swift:declaration:success', schema => {
     block('open');
     dig('field', () => block('property'));
     block('close');
   });
 
-  blueprint('swift:open:response', schema => {
+  blueprint('swift:open:success', schema => {
     write('struct Response: Decodable {');
   });
 

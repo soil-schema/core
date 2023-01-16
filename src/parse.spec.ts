@@ -60,4 +60,23 @@ node Name
 
     expect(ast.length).to.equal(1);
   });
+
+  it('parse broken directive', () => {
+    const source = `
+node Broken {
+  invalid Test
+  invalid Test {
+    invalid Test
+  }
+  node Sample
+}
+`;
+    const grammer = new Grammer()
+      .directive([], 'node', /^[A-Za-z]+$/, () => {});
+
+    const ast = parse(tokenize(source), grammer);
+
+    expect(ast.length).to.equal(1);
+    expect(ast[0].block.length).to.equal(1);
+  });
 });

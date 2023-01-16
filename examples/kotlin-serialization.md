@@ -24,7 +24,7 @@ entity Book {
   field title: String
 
   endpoint GET /books {
-    response {
+    success {
       field books: List<Book>
     }
   }
@@ -36,25 +36,31 @@ entity Book {
 ```kotlin generated
 package com.soil
 
+import android.net.Uri.Builder as UrlBuilder
 import kotlinx.serialization.*
 
 @Serializable
 data class Book(
-  val id: String,
-  val title: String,
+    val id: String,
+    val title: String,
 ) {
 
-  data class GetBooksEndpoint {
+    class GetBooksEndpoint {
 
-    val method: String = "GET"
-    val path: String = "/books"
+        val method: String = "GET"
+        val path: String = "/books"
 
-    @Serializable
-    data class Response(
-      val books: List<Book>,
-    )
+        fun build(builder: UrlBuilder) {
+            builder
+                .path(this.path)
+        }
 
-  }
+        @Serializable
+        data class Response(
+            val books: List<Book>,
+        )
+
+    }
 
 }
 ```

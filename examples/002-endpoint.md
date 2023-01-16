@@ -12,7 +12,10 @@ entity User {
   field name: String
 
   endpoint GET /users {
-    response {
+    query sort: Enum {
+      values recommended, newer
+    }
+    success {
       field users: List<User>
     }
   }
@@ -56,21 +59,28 @@ struct User: Codable {
 ```kotlin generated
 package com.soil
 
+import android.net.Uri.Builder as UrlBuilder
+
 data class User(
-  val id: Int,
-  val name: String,
+    val id: Int,
+    val name: String,
 ) {
 
-  data class GetUsersEndpoint {
+    class GetUsersEndpoint {
 
-    val method: String = "GET"
-    val path: String = "/users"
+        val method: String = "GET"
+        val path: String = "/users"
 
-    data class Response(
-      val users: List<User>,
-    )
+        fun build(builder: UrlBuilder) {
+            builder
+                .path(this.path)
+        }
 
-  }
+        data class Response(
+            val users: List<User>,
+        )
+
+    }
 
 }
 ```

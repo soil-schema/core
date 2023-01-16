@@ -40,9 +40,11 @@ In most cases, the class body contains additional data model definitions.
 ```kotlin generated
 package com.soil
 
+import android.net.Uri.Builder as UrlBuilder
+
 data class Account(
-  val id: Int,
-  val name: String,
+    val id: Int,
+    val name: String,
 ) {
 
 }

@@ -89,7 +89,17 @@ export class File {
   }
 }
 
-export class Block extends Writable {
+// === Content Element
+
+interface ContentElement {
+  body: string;
+  raw: string;
+  replace(body: string): void
+  write(chunk: any, callback?: (error: Error | null | undefined) => void): boolean;
+  end(cb?: () => void): this;
+}
+
+export class Block extends Writable implements ContentElement {
 
   buffer: string = '';
 
@@ -101,7 +111,47 @@ export class Block extends Writable {
     this.buffer += chunk;
     callback();
   }
+
+  replace(body: string) {
+    this.buffer = body;
+  }
+
+  get raw(): string {
+    return this.buffer;
+  }
+
+  get body(): string {
+    return "\n" + this.buffer + "\n";
+  }
 }
+
+export class Statement extends Writable implements ContentElement {
+
+  buffer: string = '';
+
+  constructor() {
+    super();
+  }
+
+  _write(chunk: any, encoding: BufferEncoding, callback: (error?: Error | null | undefined) => void): void {
+    this.buffer += chunk;
+    callback();
+  }
+
+  replace(body: string) {
+    this.buffer = body;
+  }
+
+  get raw(): string {
+    return this.buffer;
+  }
+
+  get body(): string {
+    return this.buffer;
+  }
+}
+
+// === Context
 
 export class Context {
 
@@ -111,7 +161,7 @@ export class Context {
   currentFile: File | undefined;
   nodeStack: Node[] = [];
   envKeys: string[] = [];
-  stack: Block[] = [];
+  stack: ContentElement[] = [];
   logs: string[] = []
   config: any;
 
@@ -128,10 +178,14 @@ export class Context {
     const last = this.stack.shift();
     last?.end();
     if (last) {
-      this.write('\n');
-      this.write(last.buffer);
-      this.write('\n');
+      this.write(last.body);
     }
+  }
+
+  rollback(): string {
+    const last = this.stack.shift();
+    last?.end();
+    return last?.body || '';
   }
 
   // Node Accessories.
@@ -141,7 +195,7 @@ export class Context {
   }
 
   get currentBody(): string {
-    return this.stack[0]?.buffer || this.currentFile?.body || '';
+    return this.stack[0]?.raw || this.currentFile?.body || '';
   }
 
   get(key: string): string | undefined {
@@ -168,6 +222,10 @@ export class Context {
 
   beginBlock() {
     this.stack.unshift(new Block());
+  }
+
+  beginStatement() {
+    this.stack.unshift(new Statement());
   }
 
   write(body: string) {
@@ -217,7 +275,7 @@ export const hook = (name: string, hook: Hook) => {
 export const replace = (replacement: (current: string) => string) => {
   const { context } = capture();
   const block = context.stack[0];
-  block.buffer = replacement(block.buffer);
+  block.replace(replacement(block.raw));
 }
 
 /// Start to build new source file.
@@ -244,7 +302,6 @@ const callHooks = (hookNames: string[], callback: HookCallback): HookCallback =>
   hookNames.forEach(hookName => {
     hooks.push(...repository.hooks.filter(({ name }) => name == hookName));
   });
-  hooks.reverse();
 
   let cb: HookCallback = callback;
   for (const hook of hooks) {
@@ -268,6 +325,9 @@ export const block = (name: string) => {
       node.annotation && `${langcode}:${name}:${node.directive}:${node.annotation}`,
       `${langcode}:${name}:${node.directive}`,
       `${langcode}:${name}`,
+      node.annotation && `${langcode}:${name}+post:${node.directive}:${node.annotation}`,
+      `${langcode}:${name}+post:${node.directive}`,
+      `${langcode}:${name}+post`,
     ].filter(e => e) as string[];
 
     callHooks(hooks, repository.find(langcode, name, node.directive)?.block || (() => {}))(context);
@@ -278,18 +338,29 @@ export const block = (name: string) => {
 }
 
 /// Run blueprint with finding current langcode and current node directive.
-export const statement = (name: string) => {
+export const statement = (name: string, options: { capture: boolean } = { capture: false }): string | undefined => {
   const { context, langcode, node } = capture();
+  context.beginStatement();
 
-  context.logs.push(`run statement: "${langcode}:${name}:${node.directive}"`);
+  context.logs.push(`begin statement: "${langcode}:${name}:${node.directive}"`);
 
-  const hooks = [
-    node.annotation && `${langcode}:${name}:${node.directive}:${node.annotation}`,
-    `${langcode}:${name}:${node.directive}`,
-    `${langcode}:${name}`,
-  ].filter(e => e) as string[];
+  try {
 
-  callHooks(hooks, repository.find(langcode, name, node.directive)?.block || (() => {}))(context);
+    const hooks = [
+      node.annotation && `${langcode}:${name}:${node.directive}:${node.annotation}`,
+      `${langcode}:${name}:${node.directive}`,
+      `${langcode}:${name}`,
+    ].filter(e => e) as string[];
+
+    callHooks(hooks, repository.find(langcode, name, node.directive)?.block || (() => {}))(context);
+
+  } finally {
+    if (options.capture) {
+      return context.rollback();
+    } else {
+      context.commit();
+    }
+  }
 }
 
 /// Dig child nodes.
@@ -299,6 +370,7 @@ export const dig = (condition: string, block: (context: Context) => void) => {
   const matcher = new NodeMatcher(condition);
 
   const targets = Array.from(node.block)
+    .filter(target => !target.shallow)
     .filter(target => target.test(matcher))
   targets
     .forEach(target => {

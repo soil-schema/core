@@ -1,3 +1,4 @@
+import _pluralize from 'pluralize';
 
 /**
  * Capitalize string.
@@ -11,7 +12,7 @@ export const capitalize = function(subject: string | undefined, options: { separ
   if (subject == '') return '';
   return subject
     .toLocaleLowerCase()
-    .split(/[\s\-\:]+/)
+    .split(/[\s\-\_\:]+/g)
     .map(sentence => sentence.trim())
     .map(sentence => sentence.substring(0, 1).toUpperCase() + sentence.substring(1))
     .join(typeof options.separator == 'string' ? options.separator : ' ');
@@ -27,6 +28,26 @@ export const camelize = function(str: string): string {
     if (+match === 0) return ""; // or if (/\s+/.test(match)) for white spaces
     return index === 0 ? match.toLowerCase() : match.toUpperCase();
   });
+}
+
+/**
+ * Camelize string.
+ * @param str 
+ * @returns camelized string.
+ */
+export const classify = function(str: string): string {
+  return str.split(/[\s\-\_]/g).join(' ').replace(/(?:^\w|[A-Z]|\b\w|\s+)/g, function(match, index) {
+    if (+match === 0) return ""; // or if (/\s+/.test(match)) for white spaces
+    return index === 0 ? match.toLowerCase() : match.toUpperCase();
+  });
+}
+
+export const pluralize = function(str: string): string {
+  return _pluralize(str);
+}
+
+export const singular = function(str: string): string {
+  return _pluralize.singular(str);
 }
 
 export const sentence = function(path: string | undefined): string {

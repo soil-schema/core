@@ -2,6 +2,7 @@ import Directive from './Directive.js';
 import NodeStructure from '../structure/Node.js';
 import TokenProvider from './TokenProvider.js';
 import TokenSeeker from './TokenSeeker.js';
+import util from 'node:util';
 
 export type DirectiveBuilder = (directive: Directive) => void;
 

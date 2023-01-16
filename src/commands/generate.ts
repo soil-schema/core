@@ -50,7 +50,7 @@ export default async (options: GenerateOptions) => {
   ast.forEach(node => root.addChild(node));
 
   await Promise.all(options.langcode.map(async langcode => {
-    const generateConfig: any = (config.generate || {})[langcode] || {};
+    const generateConfig: any = Object.assign({}, config, (config.generate || {})[langcode] || {});
 
     let exportDir: string = '';
     if (typeof config.exportDir == 'string') {
