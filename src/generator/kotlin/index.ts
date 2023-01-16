@@ -17,6 +17,9 @@ const builder = () => {
   blueprint('kotlin:file:entity', entity => {
     file(entity.require('name'), { ext: 'kt' });
     block('content');
+    if (entity.inEnv('debug')) {
+      block('logs');
+    }
   });
 
   blueprint('kotlin:file:scenario', entity => {
@@ -281,12 +284,29 @@ const builder = () => {
     if (file) {
       file.body = new Pretty(file.body).pretty({
         indentBlock: ['{}', '()'],
-        comment: ['//', '///'],
+        comment: ['//', '///', ['/*', '*/']],
         stripComment: context.inEnv('strip-comment'),
         indent: ' '.repeat(config.indentLength || 4),
       });
     }
   });
+
+  // === Debug
+
+  hook('kotlin:logs:entity', (entity, next) => {
+    write('/*\n');
+    write(' Blueprint logs\n');
+    entity.logs
+      .forEach(line => write(' ', line, '\n'));
+    write(' */\n');
+    next(entity);
+  });
+
+  blueprint('kotlin:debug', entity => {
+    write(entity.get('name') || 'unnamed');
+  });
+
+  // === Extensions
 
   kotlinSerialization();
   okhttp();

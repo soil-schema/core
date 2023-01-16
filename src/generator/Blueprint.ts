@@ -236,6 +236,10 @@ export class Context {
       this.stack[0].write(body);
     }
   }
+
+  log(...messages: string[]) {
+    this.logs.push(...messages.map(message => ' | '.repeat(this.stack.length - 1) + message));
+  }
 }
 
 let currentContext: Context | undefined = void 0;
@@ -317,7 +321,9 @@ export const block = (name: string) => {
   const { context, langcode, node } = capture();
   context.beginBlock();
 
-  context.logs.push(`begin block: "${langcode}:${name}:${node.directive}"`);
+  if (name != 'logs') {
+    context.log(`<Block> "${langcode}:${name}:${node.directive}" / ${statement('debug', { capture: true })}`);
+  }
 
   try {
 
@@ -340,9 +346,16 @@ export const block = (name: string) => {
 /// Run blueprint with finding current langcode and current node directive.
 export const statement = (name: string, options: { capture: boolean } = { capture: false }): string | undefined => {
   const { context, langcode, node } = capture();
+
   context.beginStatement();
 
-  context.logs.push(`begin statement: "${langcode}:${name}:${node.directive}"`);
+  if (name != 'debug') {
+    try {
+      context.log(`<Statement> "${langcode}:${name}:${node.directive}" / ${statement('debug', { capture: true })}`);
+    } catch (error: any) {
+      context.log(`! ${error.message}`);
+    }
+  }
 
   try {
 
@@ -370,7 +383,6 @@ export const dig = (condition: string, block: (context: Context) => void) => {
   const matcher = new NodeMatcher(condition);
 
   const targets = Array.from(node.block)
-    .filter(target => !target.shallow)
     .filter(target => target.test(matcher))
   targets
     .forEach(target => {
@@ -415,12 +427,13 @@ export const exists = (condition: string): boolean => {
 /// Enter an environment with key
 export const env = (key: string, block: () => void) => {
   const { context } = capture();
-  context.logs.push(`enter env: ${key}`);
+  context.log(`<${key}>`);
   context.envKeys.push(key);
   try {
     block()
   } finally {
     delete context.envKeys[context.envKeys.indexOf(key)];
+    context.log(`</${key}>`);
   }
 }
 

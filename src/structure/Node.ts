@@ -4,7 +4,6 @@ export default class Node {
   directive: string;
   definition: { [key: string]: string };
   block: Node[] = [];
-  shallow = false;
 
   constructor(directive: string, definition: { [key: string]: string }, annotation?: string) {
     Object.defineProperty(this, 'parent', { enumerable: false, value: void 0, writable: true });

@@ -12,6 +12,7 @@ import '../generator/kotlin/index.js';
 type GenerateOptions = {
   langcode: string[];
   config: string;
+  debug: boolean;
 };
 
 export const loadSource = async (dirpath: string): Promise<string[]> => {
@@ -64,6 +65,9 @@ export default async (options: GenerateOptions) => {
         .map(target => new Context(langcode, target))
         .map(context => {
           context.config = Object.assign({}, generateConfig);
+          if (options.debug) {
+            context.envKeys.push('debug');
+          }
           run(context);
           return context.currentFile;
         })

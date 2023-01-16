@@ -1,3 +1,5 @@
+import crypto from 'node:crypto';
+
 export type PrettyOptions = {
   indentBlock: string[];
   comment: (string | string[])[];
@@ -5,16 +7,48 @@ export type PrettyOptions = {
   indent?: string;
 };
 
+const BLOCK_COMMENT_PREFIX = '// BLOCK COMMENT - '
+
 export default class Pretty {
 
-  content: SourceLine[];
+  raw: string;
+  content: SourceLine[] = [];
 
   constructor(content: string) {
-    this.content = content.split(/\r?\n/g).map(line => new SourceLine(line));
+    this.raw = content;
   }
 
   // @todo supports multiline comments.
   pretty(options: PrettyOptions): string {
+
+    // Store block comments.
+
+    const blockComments: { [key: string]: string } = {};
+
+    options.comment.forEach(condition => {
+      if (Array.isArray(condition) && condition.length == 2) {
+        const [opener, closer] = condition;
+        let index = this.raw.indexOf(opener);
+        while (index > -1) {
+          let closerIndex = this.raw.indexOf(closer, index + opener.length);
+          if (closerIndex == -1) break;
+          const comment = this.raw.substring(index, closerIndex + closer.length);
+          const hash = crypto.createHash('sha256').update(comment).digest('hex');
+          this.raw = this.raw.substring(0, index) + BLOCK_COMMENT_PREFIX + hash + this.raw.substring(closerIndex + closer.length);
+
+          blockComments[hash] = comment;
+
+          index = this.raw.indexOf(opener);
+        }
+      }
+    });
+
+    // Make content from raw string.
+
+    this.content = this.raw
+      .split(/\r?\n/g)
+      .map(line => new SourceLine(line));
+
     const blockOpener = options.indentBlock.map(s => s[0]);
     const blockCloser = options.indentBlock.map(s => s[1]);
     const { indent = '  ' } = options;
@@ -59,11 +93,19 @@ export default class Pretty {
       }
     });
 
-    return this.content
+    let result = this.content
       .map(line => line.export({ indent }))
       .join('\n')
       .replace(/\r?\n\r?\n(\r?\n)+/g, '\n\n')
       .trim();
+
+    // Restore block comments.
+
+    Object.keys(blockComments).forEach(hash => {
+      result = result.replace(`${BLOCK_COMMENT_PREFIX}${hash}`, blockComments[hash]);
+    });
+
+    return result;
   }
 }
 

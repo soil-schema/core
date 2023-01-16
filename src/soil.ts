@@ -25,9 +25,11 @@ program
   .description('Generate codes from soil schema under entry directories.')
   .requiredOption('-g --generators <type...>', 'must have generating code types')
   .option('-c, --config <file>', 'config file path', 'soil.config.js')
+  .option('--debug', 'enable debug mode')
   .action(async (options, command) => generate({
     langcode: options.generators,
     config: options.config,
+    debug: options.debug,
   }));
 
 program

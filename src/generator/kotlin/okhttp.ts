@@ -8,10 +8,9 @@ export default () => {
     const config = context.config as Config;
 
     if (config.use?.includes(OKHTTP)) {
-      env(OKHTTP, () => next(context));
-    } else {
-      next(context);  
+      context.envKeys.push(OKHTTP);
     }
+    next(context);
   });
 
   hook('kotlin:close:endpoint', (endpoint, next) => {

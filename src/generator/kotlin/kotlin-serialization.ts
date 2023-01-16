@@ -9,10 +9,10 @@ export default () => {
     const config = context.config as Config;
 
     if (config.use?.includes(KOTLIN_SERIALIZATION)) {
-      env(KOTLIN_SERIALIZATION, () => next(context));
-    } else {
-      next(context);  
+      context.envKeys.push(KOTLIN_SERIALIZATION);
     }
+
+    next(context);
   });
 
   hook('kotlin:imports:entity', (entity, next) => {
