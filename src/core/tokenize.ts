@@ -1,3 +1,6 @@
+import chalk from "chalk";
+import { inspect } from "util";
+
 export class Token {
 
   body: string = '';
@@ -6,6 +9,10 @@ export class Token {
 
   capture(source: string, offset: number): number | undefined {
     return;
+  }
+
+  inspect(): string {
+    return `? ${this.body}`;
   }
 }
 
@@ -20,6 +27,10 @@ export class DeclarationToken extends Token {
     this.body = declaration;
     return offset + declaration.length;
   }
+
+  inspect(): string {
+    return chalk.yellow(`D ${this.body}`);
+  }
 }
 
 export class SeparatorToken extends Token {
@@ -33,6 +44,10 @@ export class SeparatorToken extends Token {
     this.body = separator;
     return offset + separator.length;
   }
+
+  inspect(): string {
+    return chalk.gray(`S ${this.body.trim() || '<space>'}`);
+  }
 }
 
 export class BlockOpenToken extends Token {
@@ -43,6 +58,10 @@ export class BlockOpenToken extends Token {
       return offset + 1;
     }
   }
+
+  inspect(): string {
+    return chalk.blue('B {');
+  }
 }
 
 export class BlockCloseToken extends Token {
@@ -52,6 +71,10 @@ export class BlockCloseToken extends Token {
       this.body = '}';
       return offset + 1;
     }
+  }
+
+  inspect(): string {
+    return chalk.blue('B }');
   }
 }
 
@@ -65,6 +88,10 @@ export class DescriptionToken extends Token {
     this.body = match[0];
     return offset + match[0].length;
   }
+
+  inspect(): string {
+    return chalk.gray(`C ${this.body}`);
+  }
 }
 
 export class CommentToken extends Token {
@@ -76,6 +103,10 @@ export class CommentToken extends Token {
     }
     this.body = match[0];
     return offset + match[0].length;
+  }
+
+  inspect(): string {
+    return chalk.gray(`C ${this.body}`);
   }
 }
 

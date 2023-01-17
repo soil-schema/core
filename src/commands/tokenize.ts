@@ -16,7 +16,7 @@ export default (files: string[], options: TokenizeOptions) => {
       try {
         logs.push(chalk.bold(`\r\n==== Tokenize: ${filename}`));
         const tokens = tokenize(await readFile(filepath, { encoding: 'utf-8' }));
-        tokens.forEach(token => logs.push(token.body));
+        tokens.forEach(token => logs.push(token.inspect()));
       } catch(error: any) {
         if (error.code == 'ENOENT' && error.syscall == 'open') {
           logs.push(chalk.red(`ERROR: File not found - ${filename}`));
@@ -24,5 +24,6 @@ export default (files: string[], options: TokenizeOptions) => {
           logs.push(error);
         }
       }
+      console.log(logs.join('\n'));
     });
 }
