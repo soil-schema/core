@@ -1,102 +1,64 @@
 import Node from '../structure/Node.js';
 import TokenSeeker from './TokenSeeker.js';
 
+const DIRECTIVE_DECLARATION = /^(?:(?<annotations>(?:[a-z][a-z\-]*\|)*(?:[a-z][a-z\-]*))\s)?(?<name>[a-z][a-z\-]*)$/
+
 export default class Directive {
 
   name: string;
   annotations: string[] = [];
-  directives: Directive[] = [];
+  directives: String[] = [];
   definition: RegExp | undefined
 
-  constructor(name: string, definition?: RegExp | undefined) {
-    this.name = name;
+  private _tester!: RegExp;
+
+  /**
+   * @param declaration Directive declaration e.g. `annotation1|annotation2 name`.
+   * @param definition matching pattern for definition string.
+   */
+  constructor(declaration: string, definition?: RegExp | undefined) {
+    const match = declaration.match(DIRECTIVE_DECLARATION);
+    if (match === null) {
+      throw new Error(`Invalid directive declaration: ${declaration}`);
+    }
+    this.name = match.groups?.name || '';
+    this.annotations = (match.groups?.annotations || '').split('|').filter(a => a);
     this.definition = definition;
+
+    Object.defineProperty(this, '_tester', {
+      value: new RegExp(this.annotations.length > 0 ? `^(?:(${this.annotations.join('|')})\\s+)?${this.name}\\b` : `^${this.name}\\b`),
+      enumerable: false,
+    });
   }
 
-  annotation(name: string): Directive {
-    this.annotations.push(name);
-    return this;
-  }
-
-  directive(annotations: string[], name: string, definition?: RegExp | undefined, builder: (directive: Directive) => void = () => {}): Directive {
-    const directive = new Directive(name, definition);
-    annotations.forEach(name => directive.annotation(name))
-    builder(directive);
-    this.directives.push(directive);
-    return this;
-  }
-
-  parse(seeker: TokenSeeker): Node | undefined {
-    const tokens = seeker.lookahead(2, { ignoreWhitespaces: true });
-
-    if (!this.check(tokens)) return void 0;
-
-    seeker.skipWhitespace();
-    let annotation = undefined;
-    if (this.annotations.includes(tokens[0])) {
-      annotation = tokens[0];
-      seeker.next().skipWhitespace();
-    }
-    seeker.next();
-
-    let definition = "";
-    while (seeker.token()) {
-      const token = seeker.token() ?? "\n"
-      if (/\r?\n/.test(token) || token == '{' || token == '}') break;
-      definition += token;
-      seeker.next();
-    }
-
-    const definitionMatch = this.match(definition.trim());
-
-    if (typeof definitionMatch != 'undefined') {
-      const definitionBody = Object.assign({
-        body: definitionMatch[0],
-      }, definitionMatch.groups ?? {});
-
-      const node = new Node(this.name, definitionBody, annotation);
-
-      if (seeker.token() == '{') this.parseBlock(node, seeker);
-
-      return node;
-
-    }
-
-    return undefined;
-  }
-
-  parseBlock(node: Node, seeker: TokenSeeker) {
-    if (seeker.token() != '{') return;
-
-    seeker.next();
-
-    while (seeker.token() != '}' && typeof seeker.token() == 'string') {
-      for (const directive of this.directives) {
-        seeker.stack();
-        const result = directive.parse(seeker);
-        if (typeof result != 'undefined') {
-          seeker.commit();
-          node.addChild(result);
-        } else {
-          seeker.rollback();
-        }
+  test(target: string): boolean {
+    if (this._tester.test(target) == false) return false;
+    const declaration = target.match(this._tester);
+    const definition = target.substring(declaration![0].length).trim();
+    if (definition) {
+      if (typeof this.definition == 'undefined') {
+        return false;
       }
-      seeker.next();
+      return this.definition?.test(definition);
     }
+    return typeof this.definition == 'undefined';
   }
 
-  private check(tokens: string[]): boolean {
-    if (tokens.length == 0) return false
-    if (tokens.length == 1) {
-      return tokens[0] == this.name;
+  capture(target: string): { annotation: string | undefined, directive: string, definition: { [key: string]: string } } {
+    const declaration = target.match(this._tester);
+    const definition = target.substring(declaration![0].length).trim().match(this.definition!);
+    const result = {
+      annotation: declaration![1],
+      directive: this.name,
+      definition: {} as { [key: string]: string },
+    };
+    if (definition) {
+      result.definition.body = definition[0];
+      const groups = definition.groups;
+      if (groups) {
+        Object.assign(result.definition, groups);
+      }
     }
-    if (tokens.length == 2) {
-      return tokens[0] == this.name || (this.check([tokens[1]]) && this.annotations.includes(tokens[0]));
-    }
-    return false;
-  }
-
-  private match(definition: string): RegExpMatchArray | undefined {
-    return definition.match(this.definition ?? /^\s*$/) ?? void 0;
+    return result;
   }
 }

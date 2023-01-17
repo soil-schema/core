@@ -15,10 +15,10 @@ export class Token {
   }
 }
 
-export class AmbiguousToken extends Token {
+export class DirectiveToken extends Token {
 
   inspect(): string {
-    return `A ${this.body}`;
+    return `D ${this.body}`;
   }
 }
 

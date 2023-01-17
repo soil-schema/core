@@ -238,7 +238,7 @@ export class Context {
   }
 
   log(...messages: string[]) {
-    this.logs.push(...messages.map(message => ' | '.repeat(this.stack.length - 1) + message));
+    this.logs.push(...messages.map(message => ' | '.repeat(Math.max(0, this.stack.length - 1)) + message));
   }
 }
 

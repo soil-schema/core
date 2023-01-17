@@ -33,6 +33,7 @@ const builder = () => {
     block('file-header');
     block('open');
     block('enums');
+    block('subschemas');
     if (exists('mutable field') || exists('write-only field')) {
       block('draft');
     }
@@ -87,6 +88,20 @@ const builder = () => {
     write(')');
   });
 
+  // === subschema
+
+  blueprint('kotlin:subschemas', entity => {
+    dig('field', () => block('schema'));
+  });
+
+  blueprint('kotlin:schema:field', field => {
+    const type = statement('raw-type', { capture: true });
+    if (type != '*') return;
+    write('data class ', () => statement('type-signature'), '(\n');
+    dig('schema', () => {});
+    write(')\n');
+  });
+
   // === field
 
   blueprint('kotlin:name:field', field => {
@@ -128,8 +143,13 @@ const builder = () => {
     write(`val method: String = "${endpoint.require('method')}"\n`);
     write(`val path: String = "${endpoint.require('path')}"\n`);
 
+    dig('success', () => block('subschemas'));
+    dig('request', () => block('subschemas'));
+
     block('url-builder');
+
     env('request', () => block('request'));
+
     block('response');
 
     block('close');
@@ -241,6 +261,12 @@ const builder = () => {
     let body = statement('raw-type', { capture: true });
     if (body == 'Enum') {
       statement('enum-name');
+    }
+    if (body == '*') {
+      const name = field.get('name');
+      if (name) {
+        write(capitalize(name, { separator: '' }));
+      }
     }
   });
 

@@ -1,4 +1,4 @@
-import { env, Hook, hook, replace, write } from '../Blueprint.js';
+import { env, exists, Hook, hook, replace, write } from '../Blueprint.js';
 import Config from './Config.js';
 
 const KOTLIN_SERIALIZATION = 'kotlin-serialization';
@@ -42,18 +42,17 @@ export default () => {
   });
 
   hook('kotlin:close:endpoint', (endpoint, next) => {
-    if (endpoint.inEnv(KOTLIN_SERIALIZATION)) {
-      // write('fun decode()\n');
+    if (endpoint.inEnv(KOTLIN_SERIALIZATION) && exists('success')) {
+      write('@OptIn(ExperimentalSerializationApi::class)\n');
+      write('fun decode(format: StringFormat, body: String): Response = format.decodeFromString(body)\n');
     }
     next(endpoint);
   });
 
   hook('kotlin:signature:field', (field, next) => {
     next(field);
-    if (field.inEnv(KOTLIN_SERIALIZATION)) {
-      if (field.require('name').includes('_')) {
-        replace(body => `@SerialName("${field.require('name')}")\n${body}`);
-      }
+    if (field.inEnv(KOTLIN_SERIALIZATION) && field.require('name').includes('_')) {
+      replace(body => `@SerialName("${field.require('name')}")\n${body}`);
     }
   });
 };

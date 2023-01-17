@@ -60,6 +60,8 @@ data class Book(
             val books: List<Book>,
         )
 
+        @OptIn(ExperimentalSerializationApi::class)
+        fun decode(format: StringFormat, body: String): Response = format.decodeFromString(body)
     }
 
 }

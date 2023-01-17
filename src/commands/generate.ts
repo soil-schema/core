@@ -1,7 +1,6 @@
 import { readdir, readFile, stat } from 'node:fs/promises';
 import path from 'node:path';
-import grammer from '../grammer.js';
-import { parse, tokenize } from '../parse.js';
+import { parse, tokenize, grammer } from '../core/index.js';
 import loadConfig from './config.js';
 import Node from '../structure/Node.js';
 import { Context, File, run } from '../generator/Blueprint.js';

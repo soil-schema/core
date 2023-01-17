@@ -9,48 +9,26 @@ export type DirectiveBuilder = (directive: Directive) => void;
 export default class Grammer {
 
   directives: Directive[] = [];
+  rootNames: string[] = [];
 
-  directive(annotations: string[], name: string, definition: RegExp | undefined, builder: (directive: Directive) => void = () => {}): Grammer {
-    const directive = new Directive(name, definition);
-    annotations.forEach(name => directive.annotation(name))
-    builder(directive);
+  register(directive: Directive): Grammer {
     this.directives.push(directive);
     return this;
   }
 
-  build(provider: TokenProvider): NodeStructure[] {
-
-    const seeker = new TokenSeeker(provider);
-    let result = [] as NodeStructure[];
-
-    // Source -> Directive*
-    while (seeker.token()) {
-      const directiveNode = this.testDirectives(seeker);
-      if (typeof directiveNode != 'undefined') {
-        result.push(directiveNode);
-      } else {
-        // Mismatch tokens
-        seeker.next();
-      }
+  structure(structure: { [key: string]: string[] }): Grammer {
+    for (const name in structure) {
+      this.directives.find(directive => directive.name == name)?.directives.push(...structure[name]);
     }
-
-    return result;
+    return this;
   }
 
-  private testDirectives(seeker: TokenSeeker): NodeStructure | undefined {
+  root(...names: string[]): Grammer {
+    this.rootNames = names;
+    return this;
+  }
 
-    for (const directive of this.directives) {
-      seeker.stack();
-      const result = directive.parse(seeker)
-
-      if (typeof result != 'undefined') {
-        seeker.commit();
-        return result;
-      } else {
-        seeker.rollback();
-      }
-    }
-
-    return undefined;
+  find(target: string): Directive | undefined {
+    return this.directives.find(directive => directive.test(target));
   }
 }
