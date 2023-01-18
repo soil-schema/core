@@ -45,7 +45,7 @@ struct User: Codable {
 
         struct Response: Decodable {
 
-            let users: [User]
+            let users: Array<User>
 
         }
 

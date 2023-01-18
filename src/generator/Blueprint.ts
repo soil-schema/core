@@ -1,7 +1,7 @@
 import { mkdir, stat, writeFile } from "fs/promises";
 import path from "path";
 import { Writable } from "stream";
-import Node, { Matcher, Matcher as NodeMatcher } from '../structure/Node.js';
+import Node, { Matcher, Matcher as NodeMatcher } from '../model/Node.js';
 
 // == Classes.
 
@@ -329,10 +329,13 @@ export const block = (name: string) => {
 
     const hooks = [
       node.annotation && `${langcode}:${name}:${node.directive}:${node.annotation}`,
+      node.annotation && `*:${name}:${node.directive}:${node.annotation}`,
       `${langcode}:${name}:${node.directive}`,
+      `*:${name}:${node.directive}`,
       `${langcode}:${name}`,
-      node.annotation && `${langcode}:${name}+post:${node.directive}:${node.annotation}`,
-      `${langcode}:${name}+post:${node.directive}`,
+      `*:${name}`,
+      node.annotation && `${langcode}:${name}:${node.directive}:${node.annotation}+post`,
+      `${langcode}:${name}:${node.directive}+post`,
       `${langcode}:${name}+post`,
     ].filter(e => e) as string[];
 

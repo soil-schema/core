@@ -2,7 +2,7 @@ import { readdir, readFile, stat } from 'node:fs/promises';
 import path from 'node:path';
 import { parse, tokenize, grammer } from '../core/index.js';
 import loadConfig from './config.js';
-import Node from '../structure/Node.js';
+import Node from '../model/Node.js';
 import { Context, File, run } from '../generator/Blueprint.js';
 
 import '../generator/swift/index.js';
@@ -41,7 +41,12 @@ export default async (options: GenerateOptions) => {
   const files = await loadSource(config.rootDir);
   let ast: Node[] = [];
   await Promise.all(files.map(async filepath => {
-    ast.push(...parse(tokenize(await readFile(filepath, { encoding: 'utf-8' })), grammer));
+    try {
+      ast.push(...parse(tokenize(await readFile(filepath, { encoding: 'utf-8' })), grammer));
+    } catch(error: any) {
+      console.log(filepath);
+      console.log(error.message);
+    }
   }));
 
   // Generate Client Codes and Export to Files

@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 import { afterEach, teardown } from 'mocha';
-import Node from '../structure/Node.js';
+import Node from '../model/Node.js';
 import { block, blueprint, cleanBlueprints, Context, dig, env, file, run, statement, write } from './Blueprint.js';
 
 const DRAFT_ENV = 'draft';

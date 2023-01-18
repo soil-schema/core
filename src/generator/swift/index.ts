@@ -1,6 +1,6 @@
-import { block, blueprint, dig, env, exists, file, hook, HookCallback, statement, write } from '../Blueprint.js';
+import { block, blueprint, Context, dig, env, exists, file, hook, HookCallback, statement, write } from '../Blueprint.js';
 import Pretty from '../Pretty.js';
-import { camelize, capitalize, sentence } from '../util.js';
+import { camelize, capitalize, sentence, singular } from '../util.js';
 
 const DRAFT_ENV = 'draft';
 
@@ -113,8 +113,11 @@ const builder = () => {
     write('struct ', () => statement('name'), ' {\n\n');
     write(`let method: String = "${endpoint.require('method')}"\n`);
     write(`let path: String = "${endpoint.require('path')}"\n`);
-    block('request');
+
+    env('request', () => block('request'));
+
     block('response');
+
     block('close');
   });
 
@@ -131,7 +134,11 @@ const builder = () => {
   });
 
   blueprint('swift:request:endpoint', endpoint => {
-    write('typealias Request = Void');
+    if (exists('request')) {
+      dig('request', () => block('declaration'));
+    } else {
+      write('typealias Request = Void');
+    }
   });
 
   blueprint('swift:response:endpoint', endpoint => {
@@ -140,6 +147,18 @@ const builder = () => {
     } else {
       write('typealias Response = Void');
     }
+  });
+
+  // == schema request
+
+  blueprint('swift:declaration:request', schema => {
+    block('open');
+    dig('field', () => block('property'));
+    block('close');
+  });
+
+  blueprint('swift:open:request', schema => {
+    write('struct Request: Encodable {');
   });
 
   // == schema response
@@ -156,24 +175,96 @@ const builder = () => {
 
   // === type
 
-  const LIST_PATTERN = /^List\<(.+)\>\??$/;
+  type TypeObject = {
+    body: string;
+    isList: boolean;
+    isOptional: boolean;
+  }
 
-  blueprint('swift:type', property => {
-    let type = property.get('type') || '';
-    let optional = type.endsWith('?');
-    let isList = !!type.match(LIST_PATTERN);
-    if (optional) {
-      type = type.slice(0, type.length - 1);
+  const parseType = (context: Context): TypeObject => {
+    let type = context.require('type');
+    let isList = type.startsWith('List<');
+    let isOptional = type.endsWith('?');
+
+    if (isOptional) type = type.slice(0, type.length - 1);
+    if (isList) type = type.slice(5, type.length - 1);
+
+    return { body: type, isList, isOptional };
+  }
+
+  const PRIMITIVE_TYPE_TABLE: { [key: string]: string } = {
+    'Integer': 'Int',
+  }
+
+  /**
+   * Get type string from `type` definition.
+   * 
+   * - When type is List or Map, returns element type: `List<String>` => `String`.
+   * - soil-schema primitive types convert to swift types: `Integer` => `Int`.
+   * - Self definition type returns `*`.
+   * - Enum type returns `Enum`.
+   * - Strip optional signature: `String?` => `String`.
+   * 
+   * This blueprint is designed to be captured.
+   * ```
+   * blueprint('swift:example', () => {
+   *   const type = statement('raw-type', { capture: true });
+   *   write('result: ', type);
+   * });
+   * ```
+   */
+  blueprint('swift:raw-type', field => {
+    let { body } = parseType(field);
+    write(PRIMITIVE_TYPE_TABLE[body] || body);
+  });
+
+  blueprint('swift:type:field', field => {
+    const { isList, isOptional } = parseType(field);
+    let body = statement('raw-type', { capture: true });
+    if (body == 'Enum') {
+      body = statement('enum-name', { capture: true });
     }
     if (isList) {
-      type = type.match(LIST_PATTERN)![1];
+      body = `Array<${body}>`;
     }
-    switch (type) {
-    case 'Integer':
-      type = 'Int';
-      break;
+    write(body + (isOptional ? '?' : ''));
+  });
+
+  blueprint('swift:type-signature', field => {
+    let body = statement('raw-type', { capture: true });
+    if (body == 'Enum') {
+      statement('enum-name');
     }
-    write(isList ? '[' : '', type, isList ? ']' : '', optional ? '?' : '');
+    if (body == '*') {
+      const name = field.get('name');
+      if (name) {
+        write(capitalize(name, { separator: '' }));
+      }
+    }
+  });
+
+  blueprint('swift:enum', field => {
+    const type = statement('raw-type', { capture: true });
+    if (type != 'Enum') {
+      return; // Nothing to do
+    }
+
+    write('enum class ', () => statement('type-signature'), ' {\n');
+    dig('case', () => write(() => statement('member'), ',\n'));
+    write('}\n');
+  });
+
+  blueprint('swift:enum-name', field => {
+    const { isList } = parseType(field);
+    if (isList) {
+      write(singular(capitalize(field.require('name'), { separator: '' })));
+    } else {
+      write(capitalize(field.require('name'), { separator: '' }));
+    }
+  });
+
+  blueprint('swift:member:case', context => {
+    write(context.require('body').toUpperCase().replace(/\-/g, '_'));
   });
 
   // === pretty

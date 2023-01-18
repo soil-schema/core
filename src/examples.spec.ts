@@ -5,7 +5,7 @@ import path from 'node:path';
 import activateSwift from './generator/swift/index.js';
 import activateKotlin from './generator/kotlin/index.js';
 import { parse, tokenize, grammer } from './core/index.js';
-import Node from './structure/Node.js';
+import Node from './model/Node.js';
 import { cleanBlueprints, Context, env, hook, HookCallback, run } from './generator/Blueprint.js';
 
 class Example {

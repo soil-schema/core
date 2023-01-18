@@ -235,22 +235,35 @@ const builder = () => {
     return { body: type, isList, isOptional };
   }
 
+  const PRIMITIVE_TYPE_TABLE: { [key: string]: string } = {
+    'Integer': 'Int',
+  }
+
+  /**
+   * Get type string from `type` definition.
+   * 
+   * - When type is List or Map, returns element type: `List<String>` => `String`.
+   * - soil-schema primitive types convert to kotlin types: `Integer` => `Int`.
+   * - Self definition type returns `*`.
+   * - Enum type returns `Enum`.
+   * - Strip optional signature: `String?` => `String`.
+   * 
+   * This blueprint is designed to be captured.
+   * ```
+   * blueprint('kotlin:example', () => {
+   *   const type = statement('raw-type', { capture: true });
+   *   write('result: ', type);
+   * });
+   * ```
+   */
   blueprint('kotlin:raw-type', field => {
     let { body } = parseType(field);
-    switch (body) {
-    case 'Integer':
-      body = 'Int';
-      break;
-    }
-    write(body);
+    write(PRIMITIVE_TYPE_TABLE[body] || body);
   });
 
   blueprint('kotlin:type:field', field => {
     const { isList, isOptional } = parseType(field);
-    let body = statement('raw-type', { capture: true });
-    if (body == 'Enum') {
-      body = statement('enum-name', { capture: true });
-    }
+    let body = statement('type-signature', { capture: true });
     if (isList) {
       body = `List<${body}>`;
     }
@@ -258,16 +271,19 @@ const builder = () => {
   });
 
   blueprint('kotlin:type-signature', field => {
-    let body = statement('raw-type', { capture: true });
+    let body = statement('raw-type', { capture: true }) || '';
     if (body == 'Enum') {
       statement('enum-name');
+      return;
     }
     if (body == '*') {
       const name = field.get('name');
       if (name) {
         write(capitalize(name, { separator: '' }));
+        return;
       }
     }
+    write(body);
   });
 
   blueprint('kotlin:enum', field => {

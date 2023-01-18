@@ -1,6 +1,6 @@
 import { expect } from 'chai';
-import Directive from '../grammer/Directive.js';
-import Grammer from '../grammer/Grammer.js';
+import Directive from '../model/Directive.js';
+import Grammer from '../model/Grammer.js';
 import parse from './parse.js';
 import tokenize from './tokenize.js';
 

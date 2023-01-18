@@ -1,5 +1,4 @@
-import chalk from "chalk";
-import { inspect } from "util";
+import chalk from 'chalk';
 
 export class Token {
 

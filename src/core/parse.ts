@@ -1,5 +1,5 @@
-import Node from '../structure/Node.js';
-import Grammer from '../grammer/Grammer.js';
+import Node from '../model/Node.js';
+import Grammer from '../model/Grammer.js';
 import { BlockCloseToken, BlockOpenToken, DeclarationToken, SeparatorToken, Token } from './tokenize.js';
 
 export default (tokens: Token[], grammer: Grammer): Node[] => {
