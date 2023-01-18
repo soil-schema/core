@@ -42,7 +42,19 @@ export default class Node {
   }
 
   get isRoot(): boolean {
-    return !!this.parent;
+    return this.parent == undefined;
+  }
+
+  get root(): Node {
+    return this.parent?.root || this;
+  }
+
+  resolve(path: string): Node | undefined {
+    if (path == '') return this;
+    const splittedPath = path.split('.');
+    const name = splittedPath.shift();
+    if (name == this.definition.name) return this.resolve(splittedPath.join('.'));
+    return this.block.find(node => node.definition.name == name)?.resolve(splittedPath.join('.')) || this.parent?.resolve(path);
   }
 }
 

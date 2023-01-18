@@ -1,6 +1,3 @@
-import Node from '../structure/Node.js';
-import TokenSeeker from './TokenSeeker.js';
-
 const DIRECTIVE_DECLARATION = /^(?:(?<annotations>(?:[a-z][a-z\-]*\|)*(?:[a-z][a-z\-]*))\s)?(?<name>[a-z][a-z\-]*)$/
 
 export default class Directive {
