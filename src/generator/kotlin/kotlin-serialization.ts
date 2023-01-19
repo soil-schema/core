@@ -55,6 +55,7 @@ export default () => {
   hook('kotlin:open:entity', annotateSerializable);
   hook('kotlin:open:success', annotateSerializable);
   hook('kotlin:open:field', annotateSerializable);
+  hook('kotlin:open:inner', annotateSerializable);
   hook('kotlin:enum', annotateSerializable);
 
   hook('kotlin:value:case', (context, next) => {

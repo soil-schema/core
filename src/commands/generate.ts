@@ -7,6 +7,7 @@ import { Context, File, run } from '../generator/Blueprint.js';
 
 import '../generator/swift/index.js';
 import '../generator/kotlin/index.js';
+import '../generator/node/index.js';
 
 type GenerateOptions = {
   langcode: string[];

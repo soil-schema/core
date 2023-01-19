@@ -24,7 +24,7 @@ export default class Node {
   }
 
   merge(node: Node) {
-    this.block.push(...node.block);
+    node.block.forEach(node => this.addChild(node));
   }
 
   get description(): string {
@@ -65,7 +65,9 @@ export default class Node {
     if (path == '') return this;
     const splittedPath = path.split('.');
     const name = splittedPath.shift();
-    if (name == this.definition.name) return this.resolve(splittedPath.join('.'));
+    if (this.isRoot == false) {
+      if (name == this.definition.name) return this.resolve(splittedPath.join('.'));
+    }
     return this.block.find(node => node.definition.name == name)?.resolve(splittedPath.join('.')) || this.parent?.resolve(path);
   }
 }
@@ -78,6 +80,11 @@ export class Matcher {
 
   constructor(condition: string) {
     this.condition = condition;
+
+    if (condition == '*') {
+      this.directiveMatcher = () => true;
+      return;
+    }
 
     const conditions = condition.split(/\s+/);
     if (conditions.length == 1) {

@@ -70,6 +70,16 @@ describe('Node', () => {
       expect(result?.definition.name).to.equal('Target');
     });
 
+    it('resolve nested name', () => {
+      const node = new Node('.', {});
+      node.addChild(new Node('entity', { name: 'Person' }));
+      node.block[0].addChild(new Node('field', { name: 'id' }));
+      
+      const result = node.resolve('Person.id');
+
+      expect(result?.definition.name).to.equal('id');
+    });
+
   });
 
   describe('#root', () => {
