@@ -124,7 +124,7 @@ const builder = () => {
   blueprint('swift:name:endpoint', endpoint => {
 
     // "GET /users" -> "GetUsers"
-    let name = capitalize(`${endpoint.require('method')} ${sentence(endpoint.require('path'))}`, { separator: '' });
+    let name = capitalize(`${endpoint.require('method')} ${sentence(endpoint.require('path').replace('$', ''))}`, { separator: '' });
 
     dig('action-name', actionName => {
       name = capitalize(actionName.require('value'));

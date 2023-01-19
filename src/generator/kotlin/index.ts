@@ -15,6 +15,7 @@ export const PRIMITIVE_TYPE_TABLE: { [key: string]: string } = {
   'Integer': 'Int',
   'Timestamp': 'LocalDateTime', // java.time.LocalDateTime
   'URL': 'Uri', // android.net.Uri
+  'Number': 'Double',
 }
 
 const builder = () => {
@@ -194,9 +195,12 @@ const builder = () => {
 
     parameters.forEach(parameter => {
       const node = endpoint.currentNode.resolve(parameter.substring(1));
+      console.log(endpoint.require('path'), parameter, endpoint.currentNode.parent);
       if (typeof node == 'undefined') throw new Error(`Unresolved parameter name ${parameter} on ${statement('signature', { capture: true })}`);
       if (node.directive == 'field' || node.directive == 'parameter') {
         dive(node, () => write(() => statement('member'), '\n'));
+      } else {
+        console.log(parameter, node);
       }
     });
 

@@ -39,10 +39,10 @@ export default async (options: GenerateOptions) => {
   // Load Schemas as Combined AST
 
   const files = await loadSource(config.rootDir);
-  let ast: Node[] = [];
+  const root = new Node('root', {});
   await Promise.all(files.map(async filepath => {
     try {
-      ast.push(...parse(tokenize(await readFile(filepath, { encoding: 'utf-8' })), grammer));
+      root.merge(parse(tokenize(await readFile(filepath, { encoding: 'utf-8' })), grammer));
     } catch(error: any) {
       console.log(filepath);
       console.log(error.message);
@@ -50,9 +50,6 @@ export default async (options: GenerateOptions) => {
   }));
 
   // Generate Client Codes and Export to Files
-
-  const root = new Node('root', {});
-  ast.forEach(node => root.addChild(node));
 
   await Promise.all(options.langcode.map(async langcode => {
     const generateConfig: any = Object.assign({}, config, (config.generate || {})[langcode] || {});

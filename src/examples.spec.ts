@@ -16,8 +16,8 @@ class Example {
 
   generated: { [key: string]: string } = {};
 
-  make(langcode: string, ast: Node[]): string {
-    const context = new Context(langcode, ast[0]);
+  make(langcode: string, ast: Node): string {
+    const context = new Context(langcode, ast.block[0]);
     context.envKeys.push('strip-comment');
     context.config = Object.assign({}, this.config, ((this.config.generate || {})[langcode] || {}));
     run(context);

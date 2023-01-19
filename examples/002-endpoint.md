@@ -19,6 +19,9 @@ entity User {
       field users: List<User>
     }
   }
+
+  endpoint POST /users/$id/follow {
+  }
 }
 ```
 
@@ -51,6 +54,17 @@ struct User: Codable {
 
     }
 
+    struct PostUsersIdFollowEndpoint {
+
+        let method: String = "POST"
+        let path: String = "/users/$id/follow"
+
+        typealias Request = Void
+
+        typealias Response = Void
+
+    }
+
 }
 ```
 
@@ -75,6 +89,16 @@ data class User(
         data class Response(
             val users: List<User>,
         )
+
+    }
+
+    class PostUsersIdFollowEndpoint(
+        val id: Int,
+    ) {
+        val method: String = "POST"
+        val path: String = "/users/$id/follow"
+
+        fun build(builder: UrlBuilder): UrlBuilder = builder.path(this.path)
 
     }
 

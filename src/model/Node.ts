@@ -23,6 +23,10 @@ export default class Node {
     return this;
   }
 
+  merge(node: Node) {
+    this.block.push(...node.block);
+  }
+
   get description(): string {
     let description = `${this.directive}: ${Object.keys(this.definition).map(key => `${key} = ${this.definition[key]}`)}`;
     if (typeof this.annotation == 'string') {

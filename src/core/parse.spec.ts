@@ -17,7 +17,7 @@ describe('parse', () => {
 
     it('valid case', () => {
       const source = 'test NAME';
-      const result = parse(tokenize(source), grammer);
+      const result = parse(tokenize(source), grammer).block;
       expect(result.length).to.equal(1);
       expect(result[0].directive).to.equal('test');
       expect(result[0].definition.body).to.equal('NAME');
@@ -30,7 +30,7 @@ describe('parse', () => {
 
     it('full case', () => {
       const source = 'test NAME { name annotation; name directive }';
-      const result = parse(tokenize(source), grammer);
+      const result = parse(tokenize(source), grammer).block;
       expect(result.length).to.equal(1);
       expect(result[0].block.length).to.equal(2);
     });

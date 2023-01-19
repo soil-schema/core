@@ -2,9 +2,9 @@ import Node from '../model/Node.js';
 import Grammer from '../model/Grammer.js';
 import { BlockCloseToken, BlockOpenToken, DeclarationToken, SeparatorToken, Token } from './tokenize.js';
 
-export default (tokens: Token[], grammer: Grammer): Node[] => {
+export default (tokens: Token[], grammer: Grammer): Node => {
   let cursor = 0;
-  let ast: Node[] = [];
+  let ast = new Node('root', {});
   let stack: Node[] = [];
 
   while(tokens[cursor]) {
@@ -20,7 +20,7 @@ export default (tokens: Token[], grammer: Grammer): Node[] => {
 
       const { annotation, directive, definition } = hit.capture(token.body);
       const node = new Node(directive, definition, annotation);
-      (stack[0]?.block || ast).push(node);
+      (stack[0] || ast).addChild(node);
 
       let terminated = false;
       while(tokens[cursor] instanceof SeparatorToken && terminated == false) {
