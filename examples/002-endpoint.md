@@ -11,16 +11,57 @@ entity User {
   field id: Integer
   field name: String
 
+  // Simple GET Endpoint.
+
   endpoint GET /users {
     query sort: Enum {
       values recommended, newer
     }
+    // [!] define success response.
     success {
       field users: List<User>
     }
   }
 
+  // REST API CRUD
+
+  endpoint POST /users {
+    action-name create
+    // [!] define request body.
+    request {
+      field user: User
+    }
+    success {
+      field user: User
+    }
+  }
+
+  // [!] path parameter `$id` automatic link `User.id` field.
+  endpoint GET /users/$id {
+    action-name fetch
+    success {
+      field user: User
+    }
+  }
+
+  endpoint PUT /users/$id {
+    action-name update
+    request {
+      field user: User
+    }
+    success {
+      field user: User
+    }
+  }
+
+  endpoint DELETE /users/$id {
+    action-name destroy
+  }
+
+  // Custom endpoint
+
   endpoint POST /users/$id/follow {
+    action-name follow
   }
 }
 ```
@@ -54,7 +95,71 @@ struct User: Codable {
 
     }
 
-    struct PostUsersIdFollowEndpoint {
+    struct CreateEndpoint {
+
+        let method: String = "POST"
+        let path: String = "/users"
+
+        struct Request: Encodable {
+
+            let user: User
+
+        }
+
+        struct Response: Decodable {
+
+            let user: User
+
+        }
+
+    }
+
+    struct FetchEndpoint {
+
+        let method: String = "GET"
+        let path: String = "/users/$id"
+
+        typealias Request = Void
+
+        struct Response: Decodable {
+
+            let user: User
+
+        }
+
+    }
+
+    struct UpdateEndpoint {
+
+        let method: String = "PUT"
+        let path: String = "/users/$id"
+
+        struct Request: Encodable {
+
+            let user: User
+
+        }
+
+        struct Response: Decodable {
+
+            let user: User
+
+        }
+
+    }
+
+    struct DestroyEndpoint {
+
+        let method: String = "DELETE"
+        let path: String = "/users/$id"
+
+        typealias Request = Void
+
+        typealias Response = Void
+
+    }
+
+    struct FollowEndpoint {
 
         let method: String = "POST"
         let path: String = "/users/$id/follow"
@@ -92,7 +197,68 @@ data class User(
 
     }
 
-    class PostUsersIdFollowEndpoint(
+    class CreateEndpoint(
+        val request: Request,
+    ) {
+        val method: String = "POST"
+        val path: String = "/users"
+
+        fun build(builder: UrlBuilder): UrlBuilder = builder.path(this.path)
+
+        data class Request(
+            val user: User,
+        )
+
+        data class Response(
+            val user: User,
+        )
+
+    }
+
+    class FetchEndpoint(
+        val id: Int,
+    ) {
+        val method: String = "GET"
+        val path: String = "/users/$id"
+
+        fun build(builder: UrlBuilder): UrlBuilder = builder.path(this.path)
+
+        data class Response(
+            val user: User,
+        )
+
+    }
+
+    class UpdateEndpoint(
+        val id: Int,
+        val request: Request,
+    ) {
+        val method: String = "PUT"
+        val path: String = "/users/$id"
+
+        fun build(builder: UrlBuilder): UrlBuilder = builder.path(this.path)
+
+        data class Request(
+            val user: User,
+        )
+
+        data class Response(
+            val user: User,
+        )
+
+    }
+
+    class DestroyEndpoint(
+        val id: Int,
+    ) {
+        val method: String = "DELETE"
+        val path: String = "/users/$id"
+
+        fun build(builder: UrlBuilder): UrlBuilder = builder.path(this.path)
+
+    }
+
+    class FollowEndpoint(
         val id: Int,
     ) {
         val method: String = "POST"
