@@ -1,4 +1,4 @@
-import { block, blueprint, Context, dig, env, exists, file, hook, replace, statement, write } from '../Blueprint.js';
+import { block, blueprint, Context, dig, dive, env, exists, file, hook, replace, statement, write } from '../Blueprint.js';
 import Pretty from '../Pretty.js';
 import { camelize, capitalize, sentence, singular } from '../util.js';
 import Config from './Config.js';
@@ -7,8 +7,15 @@ import Config from './Config.js';
 
 import kotlinSerialization from './kotlin-serialization.js';
 import okhttp from './okhttp.js';
+import endpointInterface from './endpoint-interface.js';
 
 const KOTLIN_URL_BUILDER = 'UrlBuilder';
+
+export const PRIMITIVE_TYPE_TABLE: { [key: string]: string } = {
+  'Integer': 'Int',
+  'Timestamp': 'LocalDateTime', // java.time.LocalDateTime
+  'URL': 'Uri', // android.net.Uri
+}
 
 const builder = () => {
 
@@ -33,7 +40,7 @@ const builder = () => {
     block('file-header');
     block('open');
     block('enums');
-    block('subschemas');
+    dig('...field', () => block('schema'));
     if (exists('mutable field') || exists('write-only field')) {
       block('draft');
     }
@@ -56,10 +63,48 @@ const builder = () => {
     block('imports');
   });
 
-  blueprint('kotlin:imports:entity', entity => {
-    write('import android.net.Uri.Builder as ', KOTLIN_URL_BUILDER, '\n');
+  blueprint('kotlin:signature:entity', entity => {
+    write(entity.inEnv('draft') ? 'Draft' : entity.require('name'));
   });
 
+  blueprint('kotlin:init', entity => {
+    let condition = entity.inEnv('draft') ? '!* field' : '!write-only field';
+    write('(\n');
+    dig(condition, () => {
+      statement('member')
+      write('\n');
+    });
+    write(')');
+  });
+
+  // == import
+
+  blueprint('kotlin:imports:entity', entity => {
+    write('import android.net.Uri.Builder as ', KOTLIN_URL_BUILDER, '\n');
+    const imports: string[] = [];
+    const config = entity.config as Config;
+    config.import?.forEach(name => {
+      imports.push(`import ${name}\n`);
+    });
+    dig('...field', () => {
+      imports.push(statement('imports', { capture: true }) || '');
+    });
+    imports
+      .filter((o, i) => o && imports.indexOf(o) === i)
+      .forEach(o => write(o));
+  });
+
+  blueprint('kotlin:imports:field', entity => {
+    const type = statement('raw-type', { capture: true });
+    if (type == PRIMITIVE_TYPE_TABLE['Timestamp']) {
+      write('import java.time.LocalDateTime\n');
+    };
+    if (type == PRIMITIVE_TYPE_TABLE['URL']) {
+      write('import android.net.Uri\n');
+    }
+  });
+
+  // Sort imports block
   hook('kotlin:imports+post', (context, next) => {
     next(context);
     replace(current => {
@@ -67,39 +112,13 @@ const builder = () => {
     });
   });
 
-  blueprint('kotlin:open:entity', entity => {
-    write('data class ');
-    statement('name');
-    statement('init');
-    write(` {\n`);
-  });
-
-  blueprint('kotlin:name:entity', entity => {
-    write(entity.inEnv('draft') ? 'Draft' : entity.require('name'));
-  });
-
-  blueprint('kotlin:init:entity', entity => {
-    let condition = entity.inEnv('draft') ? '!* field' : '!write-only field';
-    write('(\n');
-    dig(condition, () => {
-      statement('signature')
-      write('\n');
-    });
-    write(')');
-  });
-
   // === subschema
-
-  blueprint('kotlin:subschemas', entity => {
-    dig('field', () => block('schema'));
-  });
 
   blueprint('kotlin:schema:field', field => {
     const type = statement('raw-type', { capture: true });
     if (type != '*') return;
-    write('data class ', () => statement('type-signature'), '(\n');
-    dig('schema', () => {});
-    write(')\n');
+    block('open');
+    block('close');
   });
 
   // === field
@@ -115,14 +134,6 @@ const builder = () => {
     statement('type')
   });
 
-  blueprint('kotlin:signature:field', field => {
-    write('val ')
-    statement('name');
-    write(': ');
-    statement('type')
-    write(',');
-  });
-
   blueprint('kotlin:assign:field', field => {
     write('self.');
     statement('name');
@@ -132,19 +143,32 @@ const builder = () => {
 
   // === scaffold
 
+  blueprint('kotlin:open', entity => {
+    write('data class ');
+    statement('signature');
+    statement('init');
+    write(` {\n`);
+  });
+
   blueprint('kotlin:close', entity => {
     write('}');
+  });
+
+  blueprint('kotlin:member', field => {
+    write('val ')
+    statement('name');
+    write(': ');
+    statement('type')
+    write(',');
   });
 
   // === endpoint
 
   blueprint('kotlin:declaration:endpoint', endpoint => {
-    write('class ', () => statement('name'), ' {\n\n');
+    block('open');
+
     write(`val method: String = "${endpoint.require('method')}"\n`);
     write(`val path: String = "${endpoint.require('path')}"\n`);
-
-    dig('success', () => block('subschemas'));
-    dig('request', () => block('subschemas'));
 
     block('url-builder');
 
@@ -155,10 +179,36 @@ const builder = () => {
     block('close');
   });
 
-  blueprint('kotlin:name:endpoint', endpoint => {
+  blueprint('kotlin:open:endpoint', endpoint => {
+    write('class ', () => statement('signature'));
+    const args = statement('args', { capture: true });
+    if (args) {
+      write('(\n', args, ')');
+    }
+    write(' {');
+  });
+
+  blueprint('kotlin:args:endpoint', endpoint => {
+    const path = endpoint.require('path').split('/');
+    const parameters = path.filter(token => token.startsWith('$'));
+
+    parameters.forEach(parameter => {
+      const node = endpoint.currentNode.resolve(parameter.substring(1));
+      if (typeof node == 'undefined') throw new Error(`Unresolved parameter name ${parameter} on ${statement('signature', { capture: true })}`);
+      if (node.directive == 'field' || node.directive == 'parameter') {
+        dive(node, () => write(() => statement('member'), '\n'));
+      }
+    });
+
+    if (exists('request')) {
+      write('val request: Request,\n');
+    }
+  });
+
+  blueprint('kotlin:signature:endpoint', endpoint => {
 
     // "GET /users" -> "GetUsers"
-    let name = capitalize(`${endpoint.require('method')} ${sentence(endpoint.require('path'))}`, { separator: '' });
+    let name = capitalize(`${endpoint.require('method')} ${sentence(endpoint.require('path').replace('$', ''))}`, { separator: '' });
 
     dig('action-name', actionName => {
       name = capitalize(actionName.require('value'));
@@ -168,10 +218,11 @@ const builder = () => {
   });
 
   blueprint('kotlin:url-builder:endpoint', endpoint => {
-    write('fun build(builder: ', KOTLIN_URL_BUILDER, ') {\n');
-    write('builder\n');
-    write('.path(this.path)\n');
-    write('}\n');
+    write('fun build(builder: ', KOTLIN_URL_BUILDER, '): ', KOTLIN_URL_BUILDER, ' = builder.path(this.path)', '\n');
+  });
+
+  blueprint('kotlin:name:parameter', parameter => {
+    write(camelize(parameter.require('name')));
   });
 
   blueprint('kotlin:request:endpoint', endpoint => {
@@ -191,7 +242,7 @@ const builder = () => {
   blueprint('kotlin:declaration:request', schema => {
     write(() => statement('open'), '\n');
     dig('field', () => {
-      statement('signature');
+      statement('member');
       write('\n');
     });
     write(')\n');
@@ -206,7 +257,7 @@ const builder = () => {
   blueprint('kotlin:declaration:success', schema => {
     write(() => statement('open'), '\n');
     dig('field', () => {
-      statement('signature');
+      statement('member');
       write('\n');
     });
     write(')\n');
@@ -235,10 +286,6 @@ const builder = () => {
     return { body: type, isList, isOptional };
   }
 
-  const PRIMITIVE_TYPE_TABLE: { [key: string]: string } = {
-    'Integer': 'Int',
-  }
-
   /**
    * Get type string from `type` definition.
    * 
@@ -261,16 +308,16 @@ const builder = () => {
     write(PRIMITIVE_TYPE_TABLE[body] || body);
   });
 
-  blueprint('kotlin:type:field', field => {
+  blueprint('kotlin:type', field => {
     const { isList, isOptional } = parseType(field);
-    let body = statement('type-signature', { capture: true });
+    let body = statement('signature', { capture: true });
     if (isList) {
       body = `List<${body}>`;
     }
     write(body + (isOptional ? '?' : ''));
   });
 
-  blueprint('kotlin:type-signature', field => {
+  blueprint('kotlin:signature', field => {
     let body = statement('raw-type', { capture: true }) || '';
     if (body == 'Enum') {
       statement('enum-name');
@@ -292,8 +339,8 @@ const builder = () => {
       return; // Nothing to do
     }
 
-    write('enum class ', () => statement('type-signature'), ' {\n');
-    dig('case', () => write(() => statement('member'), ',\n'));
+    write('enum class ', () => statement('signature'), ' {\n');
+    dig('case', () => write(() => statement('value'), ',\n'));
     write('}\n');
   });
 
@@ -306,7 +353,7 @@ const builder = () => {
     }
   });
 
-  blueprint('kotlin:member:case', context => {
+  blueprint('kotlin:value:case', context => {
     write(context.require('body').toUpperCase().replace(/\-/g, '_'));
   });
 
@@ -350,6 +397,7 @@ const builder = () => {
 
   // === Extensions
 
+  endpointInterface();
   kotlinSerialization();
   okhttp();
 };

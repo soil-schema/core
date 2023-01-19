@@ -41,6 +41,14 @@ export default class Node {
     return matcher.test(this);
   }
 
+  get allBlock(): Node[] {
+    return this.block.reduce((result: Node[], node: Node) => {
+      result.push(node);
+      result.push(...node.allBlock);
+      return result;
+    }, []);
+  }
+
   get isRoot(): boolean {
     return this.parent == undefined;
   }

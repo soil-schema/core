@@ -45,15 +45,13 @@ data class Book(
     val title: String,
 ) {
 
-    class GetBooksEndpoint {
-
+    class GetBooksEndpoint(
+        val format: StringFormat,
+    ) {
         val method: String = "GET"
         val path: String = "/books"
 
-        fun build(builder: UrlBuilder) {
-            builder
-                .path(this.path)
-        }
+        fun build(builder: UrlBuilder): UrlBuilder = builder.path(this.path)
 
         @Serializable
         data class Response(
@@ -61,7 +59,10 @@ data class Book(
         )
 
         @OptIn(ExperimentalSerializationApi::class)
-        fun decode(format: StringFormat, body: String): Response = format.decodeFromString(body)
+        fun encode(): String = ""
+
+        @OptIn(ExperimentalSerializationApi::class)
+        fun decode(body: String): Response = format.decodeFromString(body)
     }
 
 }

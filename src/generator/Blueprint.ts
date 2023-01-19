@@ -383,9 +383,10 @@ export const statement = (name: string, options: { capture: boolean } = { captur
 export const dig = (condition: string, block: (context: Context) => void) => {
 
   const { node, context } = capture();
-  const matcher = new NodeMatcher(condition);
+  const isDeepExplorer = condition.startsWith('...');
+  const matcher = new NodeMatcher(isDeepExplorer ? condition.substring(3) : condition);
 
-  const targets = Array.from(node.block)
+  const targets = Array.from(isDeepExplorer ? node.allBlock : node.block)
     .filter(target => target.test(matcher))
   targets
     .forEach(target => {
@@ -418,6 +419,18 @@ export const dig = (condition: string, block: (context: Context) => void) => {
         if (checker !== target) throw new Error('Checker mismatch in dig process.');
       }
     });
+}
+
+/// Dive actual node
+export const dive = (target: Node, block: (context: Context) => void) => {
+  const { context } = capture();
+  try {
+    context.nodeStack.unshift(target);
+    block(context);
+  } finally {
+    const checker = context.nodeStack.shift();
+    if (checker !== target) throw new Error('Checker mismatch in dive process.');
+  }
 }
 
 /// Check target node is in children.

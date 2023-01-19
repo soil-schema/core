@@ -67,14 +67,10 @@ data class User(
 ) {
 
     class GetUsersEndpoint {
-
         val method: String = "GET"
         val path: String = "/users"
 
-        fun build(builder: UrlBuilder) {
-            builder
-                .path(this.path)
-        }
+        fun build(builder: UrlBuilder): UrlBuilder = builder.path(this.path)
 
         data class Response(
             val users: List<User>,

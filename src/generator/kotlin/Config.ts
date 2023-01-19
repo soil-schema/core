@@ -1,12 +1,8 @@
-export default class Config {
-
+type Config = {
   package: string | undefined;
   use: string[];
   indentLength: number;
-
-  constructor(options: { [key: string]: any }) {
-    this.package = options.package;
-    this.use = options.use || [];
-    this.indentLength = options.indentLength || 4;
-  }
+  import?: string[];
 }
+
+export default Config;
