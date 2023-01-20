@@ -421,7 +421,15 @@ export const dig = (condition: string, block: (context: Context) => void) => {
     });
 }
 
-/// Dive actual node
+/**
+ * Dive actual `Node`.
+ * 
+ * `dig` is "find nodes by the matcher statement and shift current node to each found nodes",
+ * `dive` is "change current node to actual one".
+ * 
+ * @param target Target node.
+ * @param block Function to execute during current node modification.
+ */
 export const dive = (target: Node, block: (context: Context) => void) => {
   const { context } = capture();
   try {
@@ -458,7 +466,7 @@ export const run = (context: Context) => {
   repository.print(context);
 };
 
-export const dsl = { blueprint, hook, file, write, block, statement, dig, env }
+export const dsl = { blueprint, hook, file, write, block, statement, dig, dive, env }
 
 // for Debug and Test
 export const cleanBlueprints = () => {
