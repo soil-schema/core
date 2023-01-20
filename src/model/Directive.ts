@@ -1,5 +1,10 @@
+import SchemaSyntaxError from './SchemaSyntaxError.js';
+
 const DIRECTIVE_DECLARATION = /^(?:(?<annotations>(?:[a-z][a-z\-]*\|)*(?:[a-z][a-z\-]*))\s)?(?<name>[a-z][a-z\-]*)$/
 
+/**
+ * Represents the directives that make up the grammar of soil-schema.
+ */
 export default class Directive {
 
   name: string;
@@ -28,10 +33,16 @@ export default class Directive {
     });
   }
 
-  test(target: string): boolean {
-    if (this._tester.test(target) == false) return false;
-    const declaration = target.match(this._tester);
-    const definition = target.substring(declaration![0].length).trim();
+  /**
+   * Test declaration statement.
+   * 
+   * @param statement 
+   * @returns Returns `true` if statement matches this directive declaration. If not, then `false`.
+   */
+  test(statement: string): boolean {
+    if (this._tester.test(statement) == false) return false;
+    const declaration = statement.match(this._tester);
+    const definition = statement.substring(declaration![0].length).trim();
     if (definition) {
       if (typeof this.definition == 'undefined') {
         return false;
@@ -41,9 +52,24 @@ export default class Directive {
     return typeof this.definition == 'undefined';
   }
 
-  capture(target: string): { annotation: string | undefined, directive: string, definition: { [key: string]: string } } {
-    const declaration = target.match(this._tester);
-    const definition = target.substring(declaration![0].length).trim().match(this.definition!);
+  /**
+   * Parse declaration statement to make `Node`.
+   * 
+   * @param statement actual declaration statement: "entity Account", "mutable field name: String" ... etc
+   * @returns parsing result.
+   * 
+   * ```
+   * const person = new Directive('person', /^(?<first>[A-Za-z]+)\s(?<last>[A-Za-z]+)$/);
+   * const result = person.parse('person Nia Eashes');
+   * console.log(result); // -> { annotation: undefined, directive: "person", definition: { body: "Nia Eashes", first: "Nia", last: "Eashes" } }
+   * ```
+   */
+  parse(statement: string): { annotation: string | undefined, directive: string, definition: { [key: string]: string } } {
+    const declaration = statement.match(this._tester);
+    if (declaration === null) {
+      throw new SchemaSyntaxError(`Fail to parse schema statement \`${statement}\` with ${this.name} directive.`);
+    }
+    const definition = statement.substring(declaration[0].length).trim().match(this.definition!);
     const result = {
       annotation: declaration![1],
       directive: this.name,
