@@ -29,43 +29,54 @@ describe('Swift Blueprints', () => {
     }
 
     context('with entity directive', () => {
+
       it('match entity name', () => {
         const node = new Node('entity', { name: 'Account' });
         expect(getSignature(node)).to.equal('Account');
       })
 
       context('in draft env', () => {
+
         beforeEach(() => {
           hook(TARGET_BLUEPRINT, (context, next) => {
             env(DRAFT_ENV, () => next(context));
           });
         });
+
         it('equals `Draft`', () => {
           const node = new Node('entity', { name: 'Account' });
           expect(getSignature(node)).to.equal('Draft');
-        })
+        });
+
       });
+
     });
 
     context('with field directive', () => {
+
       it('match camelized field name', () => {
         const node = new Node('field', { name: 'user_id', type: 'Integer' });
         expect(getSignature(node)).to.equal('userId');
-      })
+      });
+
     });
 
     context('with query directive', () => {
+
       it('match camelized query name', () => {
         const node = new Node('query', { name: 'user_id', type: 'Integer' });
         expect(getSignature(node)).to.equal('userId');
-      })
+      });
+
     });
 
     context('with parameter directive', () => {
+
       it('match camelized parameter name', () => {
         const node = new Node('parameter', { name: 'user_id', type: 'Integer' });
         expect(getSignature(node)).to.equal('userId');
-      })
+      });
+
     });
 
   });
