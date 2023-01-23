@@ -1,4 +1,4 @@
-import Node from 'src/model/Node.js';
+import Node from '../../model/Node.js';
 import { attribute, block, blueprint, Context, dig, dive, env, exists, file, hook, HookCallback, statement, write } from '../Blueprint.js';
 import Pretty from '../Pretty.js';
 import { camelize, capitalize, sentence, singular } from '../util.js';

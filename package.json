@@ -10,8 +10,7 @@
   "scripts": {
     "build": "tsc",
     "pretest": "npm run build",
-    "test": "mocha",
-    "test:coverage": "nyc npm test"
+    "test": "mocha --recursive 'dist/**/*.spec.js'"
   },
   "repository": {
     "type": "git",
@@ -40,7 +39,7 @@
     "commander": "^9.4.1",
     "pluralize": "^8.0.0"
   },
-  "mocha": {
-    "spec": "dist/**/*.spec.js"
+  "c8": {
+    "reporter": ["text", "html", "lcov"]
   }
 }
