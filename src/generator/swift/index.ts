@@ -199,11 +199,11 @@ const builder = () => {
   }
 
   /**
-   * Get type string from `type` definition.
+   * Get type string from `type` attributes.
    * 
    * - When type is List or Map, returns element type: `List<String>` => `String`.
    * - soil-schema primitive types convert to swift types: `Integer` => `Int`.
-   * - Self definition type returns `*`.
+   * - Self attributes type returns `*`.
    * - Enum type returns `Enum`.
    * - Strip optional signature: `String?` => `String`.
    * 

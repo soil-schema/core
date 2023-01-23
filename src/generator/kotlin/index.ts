@@ -293,7 +293,6 @@ const builder = () => {
   });
 
   blueprint('kotlin:build:query', query => {
-    let { isList } = parseType(query);
     const type = statement('raw-type', { capture: true });
     write('builder.appendQueryParameter("', query.require('name'), '", ');
     switch (type) {
@@ -308,7 +307,7 @@ const builder = () => {
       write('if (it) "1" else ""');
       break;
     default:
-      if (isList) {
+      if (query.get('isList')) {
         write('it.joinToString("+")');
       } else {
         write('it')
@@ -366,27 +365,25 @@ const builder = () => {
 
   type TypeObject = {
     body: string;
-    isList: boolean;
     isOptional: boolean;
   }
 
   const parseType = (context: Context): TypeObject => {
     let type = context.require('type');
-    let isList = type.startsWith('List<');
     let isOptional = type.endsWith('?');
 
     if (isOptional) type = type.slice(0, type.length - 1);
-    if (isList) type = type.slice(5, type.length - 1);
+    if (context.get('isList')) type = type.slice(5, type.length - 1);
 
-    return { body: type, isList, isOptional };
+    return { body: type, isOptional };
   }
 
   /**
-   * Get type string from `type` definition.
+   * Get type string from `type` attributes.
    * 
    * - When type is List or Map, returns element type: `List<String>` => `String`.
    * - soil-schema primitive types convert to kotlin types: `Integer` => `Int`.
-   * - Self definition type returns `*`.
+   * - Self attributes type returns `*`.
    * - Enum type returns `Enum`.
    * - Strip optional signature: `String?` => `String`.
    * 
@@ -404,7 +401,6 @@ const builder = () => {
   });
 
   blueprint('kotlin:type', context => {
-    const { isList, isOptional } = parseType(context);
     let body = statement('signature', { capture: true });
     if (body) {
       const node = context.currentNode.resolve(body);
@@ -414,14 +410,13 @@ const builder = () => {
         });
       }
     }
-    if (isList) {
+    if (context.get('isList')) {
       body = `List<${body}>`;
     }
-    write(body + ((isOptional || context.currentNode.directive == 'query') ? '?' : ''));
+    write(body + ((context.get('isOptional') || context.currentNode.directive == 'query') ? '?' : ''));
   });
 
   blueprint('kotlin:signature', field => {
-    let { isList } = parseType(field);
     let body = statement('raw-type', { capture: true }) || '';
     if (body == 'Enum') {
       statement('enum-name');
@@ -430,7 +425,7 @@ const builder = () => {
     if (body == '*') {
       const name = field.get('name');
       if (name) {
-        if (isList) {
+        if (field.get('isList')) {
           write(capitalize(singular(name), { separator: '' }));
         } else {
           write(capitalize(name, { separator: '' }));
@@ -463,8 +458,7 @@ const builder = () => {
   });
 
   blueprint('kotlin:enum-name', field => {
-    const { isList } = parseType(field);
-    if (isList) {
+    if (field.get('isList')) {
       write(singular(capitalize(field.require('name'), { separator: '' })));
     } else {
       write(capitalize(field.require('name'), { separator: '' }));

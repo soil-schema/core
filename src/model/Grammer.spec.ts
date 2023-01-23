@@ -45,9 +45,9 @@ describe('Directive', () => {
       const result = person.parse('person Nia Eashes');
       expect(result.annotation).to.be.undefined;
       expect(result.directive).to.equal('person');
-      expect(result.definition.body).to.equal('Nia Eashes');
-      expect(result.definition.first).to.equal('Nia');
-      expect(result.definition.last).to.equal('Eashes');
+      expect(result.attributes.body).to.equal('Nia Eashes');
+      expect(result.attributes.first).to.equal('Nia');
+      expect(result.attributes.last).to.equal('Eashes');
     });
 
     it("with annotation", () => {
@@ -55,15 +55,15 @@ describe('Directive', () => {
       const result = person.parse('water pokemon Araquanid');
       expect(result.annotation).to.equal('water');
       expect(result.directive).to.equal('pokemon');
-      expect(result.definition.body).to.equal('Araquanid');
+      expect(result.attributes.body).to.equal('Araquanid');
     });
 
-    it("without definition statement", () => {
+    it("without attributes statement", () => {
       const person = new Directive('staging', undefined);
       const result = person.parse('staging');
       expect(result.annotation).to.be.undefined;
       expect(result.directive).to.equal('staging');
-      expect(result.definition.body).to.equal('');
+      expect(result.attributes.body).to.equal('');
     });
 
     it("throw SchemaSyntaxError when declaration statement is invalid", () => {

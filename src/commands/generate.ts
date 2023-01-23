@@ -3,11 +3,12 @@ import path from 'node:path';
 import { parse, tokenize, grammer } from '../core/index.js';
 import loadConfig from './config.js';
 import Node from '../model/Node.js';
-import { Context, File, run } from '../generator/Blueprint.js';
+import { Context, File, prepare, run } from '../generator/Blueprint.js';
 
 import '../generator/swift/index.js';
 import '../generator/kotlin/index.js';
 import '../generator/node/index.js';
+import '../generator/shared/index.js';
 
 type GenerateOptions = {
   langcode: string[];
@@ -49,6 +50,10 @@ export default async (options: GenerateOptions) => {
       console.log(error.message);
     }
   }));
+
+  // Prepare
+
+  prepare(root);
 
   // Generate Client Codes and Export to Files
 

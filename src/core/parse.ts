@@ -18,8 +18,8 @@ export default (tokens: Token[], grammer: Grammer): Node => {
         throw new Error(`SyntaxError: Unknown directive "${token.body}"`);
       }
 
-      const { annotation, directive, definition } = hit.parse(token.body);
-      const node = new Node(directive, definition, annotation);
+      const { annotation, directive, attributes } = hit.parse(token.body);
+      const node = new Node(directive, attributes, annotation);
       (stack[0] || ast).addChild(node);
 
       let terminated = false;

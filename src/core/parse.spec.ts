@@ -19,7 +19,7 @@ describe('parse', () => {
       const result = parse(tokenize(source), grammer).block;
       expect(result.length).to.equal(1);
       expect(result[0].directive).to.equal('test');
-      expect(result[0].definition.body).to.equal('NAME');
+      expect(result[0].attributes.body).to.equal('NAME');
     });
 
     it('invalid directive name', () => {

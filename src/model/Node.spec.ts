@@ -32,20 +32,30 @@ describe('Node.Matcher', () => {
     const target2 = new Node('record', {}, 'wrong');
     expect(matcher.test(target2)).to.be.false;
   });
+
+  it('test with attribute condition', () => {
+    const matcher = new Matcher('has(name)');
+
+    const target1 = new Node('record', { name: 'Test' }, 'fine');
+    expect(matcher.test(target1)).to.be.true;
+
+    const target2 = new Node('record', {}, 'wrong');
+    expect(matcher.test(target2)).to.be.false;
+  });
 });
 
 describe('Node', () => {
 
   describe('#resolve', () => {
 
-    it('resolve with a `name` definition attribute', () => {
+    it('resolve with a `name` attributes attribute', () => {
       const node = new Node('.', {});
       node.addChild(new Node('entity', { name: 'Target' }));
       node.addChild(new Node('entity', { name: 'Another' }));
       
       const result = node.resolve('Target');
 
-      expect(result?.definition.name).to.equal('Target');
+      expect(result?.attributes.name).to.equal('Target');
     });
 
     it('resolve with absolute name', () => {
@@ -56,7 +66,7 @@ describe('Node', () => {
       
       const result = startingNode.resolve('Target');
 
-      expect(result?.definition.name).to.equal('Target');
+      expect(result?.attributes.name).to.equal('Target');
     });
 
     it('resolve local name', () => {
@@ -67,7 +77,7 @@ describe('Node', () => {
       
       const result = startingNode.resolve('Target');
 
-      expect(result?.definition.name).to.equal('Target');
+      expect(result?.attributes.name).to.equal('Target');
     });
 
     it('resolve nested name', () => {
@@ -77,7 +87,7 @@ describe('Node', () => {
       
       const result = node.resolve('Person.id');
 
-      expect(result?.definition.name).to.equal('id');
+      expect(result?.attributes.name).to.equal('id');
     });
 
   });

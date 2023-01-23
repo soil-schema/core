@@ -17,14 +17,14 @@ describe('tokenize', () => {
 
   it('specify case', () => {
     const source = `
-/// Account definition.
+/// Account attributes.
 entity Account {
   field id: Int
 }
 `;
     const result = tokenize(source);
     expect(result.length).to.equal(11);
-    expect(result.map(({ body }) => body)).to.contain('/// Account definition.');
+    expect(result.map(({ body }) => body)).to.contain('/// Account attributes.');
     expect(result.map(({ body }) => body)).to.contain('entity Account');
     expect(result.map(({ body }) => body)).to.contain('field id: Int');
   });

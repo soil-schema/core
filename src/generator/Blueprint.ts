@@ -8,15 +8,35 @@ import Node, { Matcher, Matcher as NodeMatcher } from '../model/Node.js';
 export type HookCallback = (context: Context) => void;
 export type Hook = (context: Context, next: HookCallback) => void;
 
+type Attribute = {
+  name: string,
+  condition: NodeMatcher,
+  value: (node: Node) => string | undefined,
+};
+
 export class BluePrintRepository {
 
   blueprints: { [key: string]: BluePrint } = {};
+  attributes: Attribute[] = [];
   hooks: { name: string, hook: Hook }[] = [];
 
   constructor() {
   }
 
+  prepare(node: Node) {
+    this.attributes
+      .filter(attribute => node.test(attribute.condition))
+      .forEach(attribute => {
+        const value = attribute.value(node);
+        if (value) {
+          node.attributes[attribute.name] = value;
+        }
+      });
+    node.block.forEach(node => this.prepare(node));
+  }
+
   print(context: Context) {
+
     const { node } = context;
     if (typeof node == 'undefined') throw new Error('Don\' select a node.');
     const { langcode } = context;
@@ -205,7 +225,7 @@ export class Context {
     if (key == 'annotation') {
       return this.currentNode.annotation;
     }
-    return this.currentNode.definition[key];
+    return this.currentNode.attributes[key];
   }
 
   inEnv(key: string): boolean {
@@ -276,6 +296,21 @@ export const blueprint = (hook: string, block: (context: Context) => void) => {
     throw new Error(`Duplicate BluePrint '${hook}'`);
   }
   repository.blueprints[hook] = new BluePrint(block);
+}
+
+/**
+ * Define a custom attribute for matched nodes.
+ * 
+ * @param name value name.
+ * @param condition matcher string, see {@link NodeMatcher.condition}.
+ * @param value value builder.
+ */
+export const attribute = (name: string, condition: string, value: (node: Node) => string | undefined) => {
+  repository.attributes.unshift({
+    name: name,
+    condition: new NodeMatcher(condition),
+    value: value,
+  });
 }
 
 export const hook = (name: string, hook: Hook) => {
@@ -467,6 +502,14 @@ export const env = (key: string, block: () => void) => {
   }
 }
 
+/**
+ * Prepare.
+ * @param root root node.
+ */
+export const prepare = (root: Node) => {
+  repository.prepare(root);
+}
+
 export const run = (context: Context) => {
   currentContext = context;
   repository.print(context);
@@ -478,4 +521,5 @@ export const dsl = { blueprint, hook, file, write, block, statement, dig, dive, 
 export const cleanBlueprints = () => {
   repository.blueprints = {};
   repository.hooks = [];
+  repository.attributes = [];
 };
