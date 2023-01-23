@@ -1,5 +1,7 @@
 import chalk from 'chalk';
 
+/* c8 ignore start */
+
 export class Token {
 
   body: string = '';
@@ -108,6 +110,8 @@ export class CommentToken extends Token {
     return chalk.gray(`C ${this.body}`);
   }
 }
+
+/* c8 ignore stop */
 
 export default (source: string): Token[] => {
 

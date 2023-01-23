@@ -40,6 +40,6 @@
     "pluralize": "^8.0.0"
   },
   "c8": {
-    "reporter": ["text", "html", "lcov"]
+    "reporter": ["text", "html", "lcovonly"]
   }
 }
