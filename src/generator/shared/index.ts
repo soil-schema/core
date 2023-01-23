@@ -1,3 +1,4 @@
+import Node from 'src/model/Node.js';
 import { attribute, block, blueprint, Context, dig, dive, env, exists, file, hook, HookCallback, statement, write } from '../Blueprint.js';
 import Pretty from '../Pretty.js';
 import { camelize, capitalize, sentence, singular } from '../util.js';
@@ -10,6 +11,8 @@ const PRIMITIVE_TYPES = [
   'Timestamp',
   'URL',
 ];
+
+export const isOptional = (node: Node) => node.attributes.type.endsWith('?') ? "optional" : undefined;
 
 const builder = () => {
   attribute('isList', 'has(type)', node => {
@@ -26,9 +29,7 @@ const builder = () => {
       }
     }
   });
-  attribute('isOptional', 'has(type)', node => {
-    return node.attributes.type.endsWith('?') ? "optional" : undefined;
-  });
+  attribute('isOptional', 'has(type)', isOptional);
   attribute('primitive', 'has(type)', node => {
     let type = node.attributes.type;
     if (type.startsWith('List<')) {

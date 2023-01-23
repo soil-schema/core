@@ -1,5 +1,7 @@
 # Draft data model for writing
 
+The Swift/Kotlin standard code generator (blueprint) in soil-schema generates a data model for decoding responses from the API and for sending requests to the API using POST and PUT methods, respectively.
+
 ```soil schema
 entity Article {
   field id: Integer
@@ -8,7 +10,19 @@ entity Article {
 }
 ```
 
+`mutable` annotation of `field` directive: the field is included in response and can be modified by request body for POST/PUT endpoint.
+
+`write-only` annotation on `field` directive: the field does not exist in response and can only be set on request body for the POST/PUT endpoint.
+
+|annotation|Receiver|Draft|
+|:---:|---|---|
+|-|✔|✘|
+|`mutable`|✔|✔|
+|`write-only`|✘|✔|
+
 ## Swift
+
+Swift blueprint exports baisc data model (used by decode the response from endpoint) and draft model named `Draft`.
 
 ```swift generated
 struct Article: Decodable {
@@ -32,6 +46,28 @@ struct Article: Decodable {
             self.body = body
             self.trackbackId = trackbackId
         }
+
+    }
+
+}
+```
+
+## Kotlin
+
+```kotlin generated
+package com.soil
+
+import android.net.Uri.Builder as UrlBuilder
+
+data class Article(
+    val id: Int,
+    val body: String,
+) {
+
+    data class Draft(
+        val body: String,
+        val trackbackId: Int?,
+    ) {
 
     }
 

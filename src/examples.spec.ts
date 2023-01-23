@@ -7,7 +7,7 @@ import activateKotlin from './generator/kotlin/index.js';
 import activateShared from './generator/shared/index.js';
 import { parse, tokenize, grammer } from './core/index.js';
 import Node from './model/Node.js';
-import { cleanBlueprints, Context, env, hook, HookCallback, run } from './generator/Blueprint.js';
+import { cleanBlueprints, Context, env, hook, HookCallback, prepare, run } from './generator/Blueprint.js';
 
 class Example {
   filename: string = '';
@@ -18,6 +18,7 @@ class Example {
   generated: { [key: string]: string } = {};
 
   make(langcode: string, ast: Node): string {
+    prepare(ast);
     const context = new Context(langcode, ast.block[0]);
     context.envKeys.push('strip-comment');
     context.config = Object.assign({}, this.config, ((this.config.generate || {})[langcode] || {}));
@@ -54,8 +55,8 @@ const install = () => {
 const runExample = async (name: string) => {
   const example = await loadExample(name);
   describe(example.filename, () => {
-    const ast = parse(tokenize(example.schema), grammer);
     ['swift', 'kotlin'].forEach(langcode => {
+      const ast = parse(tokenize(example.schema), grammer);
       if (typeof example.generated[langcode] == 'undefined') return;
       it(`generated ${langcode} code matches in \`${langcode} generated\` code block`, () => {
         install();
