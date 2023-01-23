@@ -1,4 +1,4 @@
-# Draft data model for writing
+# Draft data model for request body
 
 The Swift/Kotlin standard code generator (blueprint) in soil-schema generates a data model for decoding responses from the API and for sending requests to the API using POST and PUT methods, respectively.
 

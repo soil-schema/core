@@ -67,6 +67,8 @@ entity User {
 }
 ```
 
+- RequestBody uses `Draft`. see [Draft data model for request body](./003-draft.md)
+
 ## Swift
 
 ```swift generated
