@@ -515,6 +515,17 @@ export const run = (context: Context) => {
   repository.print(context);
 };
 
+export const test = (blueprint: string, node: Node): string => {
+  const [langcode, name] = blueprint.split(':');
+  try {
+    currentContext = new Context(langcode, node);
+    currentContext.beginFile(new File('test'));
+    return statement(name, { capture: true })!;
+  } finally {
+    currentContext = undefined;
+  }
+}
+
 export const dsl = { blueprint, hook, file, write, block, statement, dig, dive, env }
 
 // for Debug and Test
