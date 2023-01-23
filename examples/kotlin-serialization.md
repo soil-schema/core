@@ -51,7 +51,10 @@ data class Book(
         val method: String = "GET"
         val path: String = "/books"
 
-        fun build(builder: UrlBuilder): UrlBuilder = builder.path(this.path)
+        fun build(builder: UrlBuilder): UrlBuilder {
+            builder.path(this.path)
+            return builder
+        }
 
         @Serializable
         data class Response(

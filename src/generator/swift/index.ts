@@ -1,4 +1,4 @@
-import { block, blueprint, Context, dig, env, exists, file, hook, HookCallback, statement, write } from '../Blueprint.js';
+import { block, blueprint, Context, dig, dive, env, exists, file, hook, HookCallback, statement, write } from '../Blueprint.js';
 import Pretty from '../Pretty.js';
 import { camelize, capitalize, sentence, singular } from '../util.js';
 
@@ -153,7 +153,9 @@ const builder = () => {
 
   blueprint('swift:declaration:request', schema => {
     block('open');
-    dig('field', () => block('property'));
+    env('mutating', () => {
+      dig('field', () => block('property'));
+    });
     block('close');
   });
 
@@ -223,6 +225,18 @@ const builder = () => {
     let body = statement('raw-type', { capture: true });
     if (body == 'Enum') {
       body = statement('enum-name', { capture: true });
+    }
+    if (body) {
+      const node = field.node.resolve(body);
+      if (node) {
+        if (field.inEnv('mutating') && node.directive == 'entity') {
+          dive(node, () => {
+            if (exists('mutable field') || exists('write-only field')) {
+              body += '.Draft';
+            }
+          });
+        }
+      }
     }
     if (isList) {
       body = `Array<${body}>`;

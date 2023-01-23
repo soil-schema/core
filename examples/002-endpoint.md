@@ -9,13 +9,14 @@ This schema defines `User` model with `GET /users` endpoint.
 ```soil schema
 entity User {
   field id: Integer
-  field name: String
+  mutable field name: String
 
   // Simple GET Endpoint.
 
   endpoint GET /users {
     query sort: Enum {
-      values recommended, newer
+      case recommended
+      case newer
     }
     // [!] define success response.
     success {
@@ -69,7 +70,7 @@ entity User {
 ## Swift
 
 ```swift generated
-struct User: Codable {
+struct User: Decodable {
 
     let id: Int
 
@@ -78,6 +79,16 @@ struct User: Codable {
     init(id: Int, name: String) {
         self.id = id
         self.name = name
+    }
+
+    struct Draft: Encodable {
+
+        var name: String
+
+        init(name: String) {
+            self.name = name
+        }
+
     }
 
     struct GetUsersEndpoint {
@@ -102,7 +113,7 @@ struct User: Codable {
 
         struct Request: Encodable {
 
-            let user: User
+            let user: User.Draft
 
         }
 
@@ -136,7 +147,7 @@ struct User: Codable {
 
         struct Request: Encodable {
 
-            let user: User
+            let user: User.Draft
 
         }
 
@@ -185,11 +196,28 @@ data class User(
     val name: String,
 ) {
 
+    data class Draft(
+        val name: String,
+    ) {
+
+    }
+
     class GetUsersEndpoint {
         val method: String = "GET"
         val path: String = "/users"
 
-        fun build(builder: UrlBuilder): UrlBuilder = builder.path(this.path)
+        fun build(builder: UrlBuilder): UrlBuilder {
+            builder.path(this.path)
+            sort?.also { builder.appendQueryParameter("sort", it.rawValue) }
+            return builder
+        }
+
+        var sort: Sort? = null
+
+        enum class Sort(val rawValue: String) {
+            RECOMMENDED("recommended"),
+            NEWER("newer"),
+        }
 
         data class Response(
             val users: List<User>,
@@ -203,10 +231,13 @@ data class User(
         val method: String = "POST"
         val path: String = "/users"
 
-        fun build(builder: UrlBuilder): UrlBuilder = builder.path(this.path)
+        fun build(builder: UrlBuilder): UrlBuilder {
+            builder.path(this.path)
+            return builder
+        }
 
         data class Request(
-            val user: User,
+            val user: User.Draft,
         )
 
         data class Response(
@@ -221,7 +252,10 @@ data class User(
         val method: String = "GET"
         val path: String = "/users/$id"
 
-        fun build(builder: UrlBuilder): UrlBuilder = builder.path(this.path)
+        fun build(builder: UrlBuilder): UrlBuilder {
+            builder.path(this.path)
+            return builder
+        }
 
         data class Response(
             val user: User,
@@ -236,10 +270,13 @@ data class User(
         val method: String = "PUT"
         val path: String = "/users/$id"
 
-        fun build(builder: UrlBuilder): UrlBuilder = builder.path(this.path)
+        fun build(builder: UrlBuilder): UrlBuilder {
+            builder.path(this.path)
+            return builder
+        }
 
         data class Request(
-            val user: User,
+            val user: User.Draft,
         )
 
         data class Response(
@@ -254,7 +291,10 @@ data class User(
         val method: String = "DELETE"
         val path: String = "/users/$id"
 
-        fun build(builder: UrlBuilder): UrlBuilder = builder.path(this.path)
+        fun build(builder: UrlBuilder): UrlBuilder {
+            builder.path(this.path)
+            return builder
+        }
 
     }
 
@@ -264,7 +304,10 @@ data class User(
         val method: String = "POST"
         val path: String = "/users/$id/follow"
 
-        fun build(builder: UrlBuilder): UrlBuilder = builder.path(this.path)
+        fun build(builder: UrlBuilder): UrlBuilder {
+            builder.path(this.path)
+            return builder
+        }
 
     }
 

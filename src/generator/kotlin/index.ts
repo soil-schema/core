@@ -143,13 +143,6 @@ const builder = () => {
     write(camelize(field.require('name')));
   });
 
-  blueprint('kotlin:property:field', field => {
-    write(field.inEnv('draft') ? 'var ' : 'let ');
-    statement('name');
-    write(': ');
-    statement('type')
-  });
-
   blueprint('kotlin:assign:field', field => {
     write('self.');
     statement('name');
@@ -176,11 +169,25 @@ const builder = () => {
   });
 
   blueprint('kotlin:member', field => {
+    if (statement('raw-type', { capture: true }) == PRIMITIVE_TYPE_TABLE['URL']) {
+      write('@Contextual\n');
+    }
     write('val ')
     statement('name');
     write(': ');
     statement('type')
     write(',');
+  });
+
+  blueprint('kotlin:property', field => {
+    write((field.inEnv('draft') || field.inEnv('mutating')) ? 'var ' : 'val ');
+    statement('name');
+    write(': ');
+    statement('type')
+    const defaultValue = statement('default-value', { capture: true });
+    if (defaultValue) {
+      write(' = ', defaultValue);
+    }
   });
 
   // === endpoint
@@ -193,8 +200,14 @@ const builder = () => {
 
     block('url-builder');
 
+    env('mutating', () => {
+      dig('...query', () => block('property'));
+    });
+
     dig('...field', () => block('enum'));
     dig('...parameter', () => block('enum'));
+    dig('...query', () => block('enum'));
+
     dig('...field', () => block('schema'));
 
     env('request', () => block('request'));
@@ -256,11 +269,53 @@ const builder = () => {
   });
 
   blueprint('kotlin:url-builder:endpoint', endpoint => {
-    write('fun build(builder: ', KOTLIN_URL_BUILDER, '): ', KOTLIN_URL_BUILDER, ' = builder.path(this.path)', '\n');
+    write('fun build(builder: ', KOTLIN_URL_BUILDER, '): ', KOTLIN_URL_BUILDER, ' {\n');
+    write('builder.path(this.path)', '\n')
+    dig('query', query => {
+      write(() => statement('name'), '?.also { ');
+      statement('build');
+      write(' }\n')
+    })
+    write('return builder\n')
+    write('}');
   });
 
   blueprint('kotlin:name:parameter', parameter => {
     write(camelize(parameter.require('name')));
+  });
+
+  blueprint('kotlin:name:query', query => {
+    write(camelize(query.require('name')));
+  });
+
+  blueprint('kotlin:default-value:query', query => {
+    write('null');
+  });
+
+  blueprint('kotlin:build:query', query => {
+    let { isList } = parseType(query);
+    const type = statement('raw-type', { capture: true });
+    write('builder.appendQueryParameter("', query.require('name'), '", ');
+    switch (type) {
+    case 'Enum':
+      write('it.rawValue');
+      break;
+    case 'Int':
+    case 'Double':
+      write('it.toString()');
+      break;
+    case 'Boolean':
+      write('if (it) "1" else ""');
+      break;
+    default:
+      if (isList) {
+        write('it.joinToString("+")');
+      } else {
+        write('it')
+      }
+      break;
+    }
+    write(')')
   });
 
   blueprint('kotlin:request:endpoint', endpoint => {
@@ -279,9 +334,11 @@ const builder = () => {
 
   blueprint('kotlin:declaration:request', schema => {
     write(() => statement('open'), '\n');
-    dig('field', () => {
-      statement('member');
-      write('\n');
+    env('mutating', () => {
+      dig('field', () => {
+        statement('member');
+        write('\n');
+      });
     });
     write(')\n');
   });
@@ -346,11 +403,11 @@ const builder = () => {
     write(PRIMITIVE_TYPE_TABLE[body] || body);
   });
 
-  blueprint('kotlin:type', field => {
-    const { isList, isOptional } = parseType(field);
+  blueprint('kotlin:type', context => {
+    const { isList, isOptional } = parseType(context);
     let body = statement('signature', { capture: true });
     if (body) {
-      const node = field.currentNode.resolve(body);
+      const node = context.currentNode.resolve(body);
       if (node) {
         dive(node, () => {
           body = statement('signature', { capture: true })
@@ -360,7 +417,7 @@ const builder = () => {
     if (isList) {
       body = `List<${body}>`;
     }
-    write(body + (isOptional ? '?' : ''));
+    write(body + ((isOptional || context.currentNode.directive == 'query') ? '?' : ''));
   });
 
   blueprint('kotlin:signature', field => {
@@ -381,16 +438,26 @@ const builder = () => {
         return;
       }
     }
+    const node = field.node.resolve(body);
+    if (node) {
+      if (field.inEnv('mutating') && node.directive == 'entity') {
+        dive(node, () => {
+          if (exists('mutable field') || exists('write-only field')) {
+            body += '.Draft';
+          }
+        });
+      }
+    }
     write(body);
   });
 
-  blueprint('kotlin:enum', field => {
+  blueprint('kotlin:enum', () => {
     const type = statement('raw-type', { capture: true });
     if (type != 'Enum') {
       return; // Nothing to do
     }
 
-    write('enum class ', () => statement('signature'), ' {\n');
+    write('enum class ', () => statement('signature'), '(val rawValue: String) {\n');
     dig('case', () => write(() => statement('value'), ',\n'));
     write('}\n');
   });
@@ -405,7 +472,8 @@ const builder = () => {
   });
 
   blueprint('kotlin:value:case', context => {
-    write(context.require('body').toUpperCase().replace(/\-/g, '_'));
+    write(context.require('value').toUpperCase().replace(/\-/g, '_'));
+    write('("', context.require('value'), '")')
   });
 
   // === pretty

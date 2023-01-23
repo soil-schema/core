@@ -265,6 +265,12 @@ const capture = (): { langcode: string, context: Context, node: Node, file: File
   return { langcode: context.langcode, context, node, file };
 }
 
+/**
+ * Define a blueprint.
+ * 
+ * @param hook blueprint hook name e.g. `kotlin:file:entity`, `swift:member:field`.
+ * @param block actual code block to render blueprint content.
+ */
 export const blueprint = (hook: string, block: (context: Context) => void) => {
   if (typeof repository.blueprints[hook] != 'undefined') {
     throw new Error(`Duplicate BluePrint '${hook}'`);
