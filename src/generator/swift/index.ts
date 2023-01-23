@@ -179,19 +179,15 @@ const builder = () => {
 
   type TypeObject = {
     body: string;
-    isList: boolean;
-    isOptional: boolean;
   }
 
   const parseType = (context: Context): TypeObject => {
     let type = context.require('type');
-    let isList = type.startsWith('List<');
-    let isOptional = type.endsWith('?');
 
-    if (isOptional) type = type.slice(0, type.length - 1);
-    if (isList) type = type.slice(5, type.length - 1);
+    if (type.endsWith('?')) type = type.slice(0, type.length - 1);
+    if (type.startsWith('List<')) type = type.slice(5, type.length - 1);
 
-    return { body: type, isList, isOptional };
+    return { body: type };
   }
 
   const PRIMITIVE_TYPE_TABLE: { [key: string]: string } = {
@@ -221,7 +217,6 @@ const builder = () => {
   });
 
   blueprint('swift:type:field', field => {
-    const { isList, isOptional } = parseType(field);
     let body = statement('raw-type', { capture: true });
     if (body == 'Enum') {
       body = statement('enum-name', { capture: true });
@@ -238,10 +233,10 @@ const builder = () => {
         }
       }
     }
-    if (isList) {
+    if (field.get('isList')) {
       body = `Array<${body}>`;
     }
-    write(body + (isOptional ? '?' : ''));
+    write(body + (field.get('isOptional') ? '?' : ''));
   });
 
   blueprint('swift:type-signature', field => {
@@ -269,8 +264,7 @@ const builder = () => {
   });
 
   blueprint('swift:enum-name', field => {
-    const { isList } = parseType(field);
-    if (isList) {
+    if (field.get('isList')) {
       write(singular(capitalize(field.require('name'), { separator: '' })));
     } else {
       write(capitalize(field.require('name'), { separator: '' }));

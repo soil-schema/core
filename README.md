@@ -1,6 +1,6 @@
-# soil
+# soil-schema
 
-soil is schema language for REST and JSON api and swift / kotlin client code generator.
+soil-schema is schema language for REST and JSON api and swift / kotlin client code generator.
 
 - Short REST api based schema.
 - Small and flexible code generation.
